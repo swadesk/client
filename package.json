@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
+    "dev:local": "next dev --webpack",
+    "dev:remote": "dotenv -e .env -e .env.remote -- next dev --webpack",
+    "build:remote": "dotenv -e .env -e .env.remote -- next build",
     "dev:clean": "rm -rf .next && next dev --webpack",
     "dev:webpack": "next dev --webpack",
     "build": "next build",
@@ -45,6 +48,7 @@
     "eslint-config-next": "16.1.7",
     "postcss": "^8.5.8",
     "tailwindcss": "^3.4.19",
-    "typescript": "^5"
+    "typescript": "^5",
+    "dotenv-cli": "^8.0.0"
   }
 }

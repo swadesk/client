@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getKitchenSocket } from "@/lib/socket";
 import { useAuthStore } from "@/store/auth-store";
-import { useActiveRestaurant, useRestaurantStore } from "@/store/restaurant-store";
+import { useRestaurantStore } from "@/store/restaurant-store";
 import { fetchKitchenOrdersList } from "@/lib/floor-orders";
 import { qk } from "@/lib/query-keys";
 import {
@@ -52,7 +52,6 @@ export function OrderNotificationBell() {
   const token = useAuthStore((s) => s.accessToken);
   const user = useAuthStore((s) => s.user);
   const restaurantId = useRestaurantStore((s) => s.activeRestaurantId);
-  const activeRestaurant = useActiveRestaurant();
   const [items, setItems] = React.useState<NotificationItem[]>([]);
   const [open, setOpen] = React.useState(false);
   const seenOrderIdsRef = React.useRef<Set<string>>(new Set());
@@ -90,19 +89,9 @@ export function OrderNotificationBell() {
           "border-primary/20 bg-background/95 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.35)]",
       });
 
-      if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-        try {
-          const venue = activeRestaurant?.name ?? "your restaurant";
-          new Notification(`New order at ${venue}`, {
-            body: text,
-            tag: dedupeKey ?? `order-created-${source}`,
-          });
-        } catch {
-          // Ignore browser notification runtime errors; toast is primary UX.
-        }
-      }
+      // Background: system notification + sound come from ToastSoundBridge when the tab is hidden.
     },
-    [activeRestaurant?.name, restaurantId, router],
+    [restaurantId, router],
   );
 
   React.useEffect(() => {

@@ -65,8 +65,10 @@ function isDuplicateMemberError(err: unknown): boolean {
       : "";
   return (
     message.includes("already exists") ||
+    message.includes("already registered") ||
     message.includes("duplicate") ||
-    message.includes("email") && message.includes("exists") ||
+    (message.includes("email") && message.includes("exists")) ||
+    (message.includes("email") && message.includes("registered")) ||
     code.includes("duplicate") ||
     code.includes("already_exists")
   );
@@ -472,6 +474,7 @@ export default function WaitersPage() {
       setWaiterToDelete(null);
       if (restaurantId) {
         void qc.invalidateQueries({ queryKey: qk.adminWaiters(restaurantId) });
+        void qc.invalidateQueries({ queryKey: ["restaurant.members", restaurantId] });
         invalidateStaffTableQueries(qc, restaurantId);
       }
     },
