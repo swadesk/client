@@ -1,14 +1,14 @@
 "use client";
 
 import * as React from "react";
+import { isPwaPushRuntimeEnabled } from "@/lib/web-push-client";
 
 export function RegisterServiceWorker() {
   React.useEffect(() => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
-    // In local dev, stale SW/cache can serve outdated chunk URLs and cause ChunkLoadError.
-    // Keep dev SW-free and clear old registrations/caches proactively.
-    if (process.env.NODE_ENV !== "production") {
+    // Without SW: avoid stale SW/cache in dev (ChunkLoadError). Enable SW when production or NEXT_PUBLIC_ENABLE_PUSH.
+    if (!isPwaPushRuntimeEnabled()) {
       void navigator.serviceWorker.getRegistrations().then((registrations) => {
         void Promise.all(registrations.map((registration) => registration.unregister()));
       });

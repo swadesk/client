@@ -23,6 +23,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { useRouter } from "next/navigation";
 import { isSuperAdmin } from "@/lib/auth-routing";
 import { InstallAppButton } from "@/components/pwa/install-app-button";
+import { EnablePushNotificationsButton } from "@/components/pwa/enable-push-notifications-button";
 import { OrderNotificationBell } from "@/components/layout/order-notification-bell";
 import { StaffShiftNotificationBell } from "@/components/layout/staff-shift-notification-bell";
 import { useStaffShiftStore } from "@/store/staff-shift-store";
@@ -117,6 +118,7 @@ export function TopHeader({
         </Button>
 
         <InstallAppButton />
+        <EnablePushNotificationsButton />
         <StaffShiftNotificationBell />
         <OrderNotificationBell />
 
