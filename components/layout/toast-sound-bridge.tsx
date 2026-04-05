@@ -51,8 +51,10 @@ function notifyIfBackground(toast: ToastT): void {
 }
 
 /**
- * Plays a short sound for every Sonner toast (except loading) and shows a system notification
- * when the tab is in the background so alerts are noticeable when toast UI is not visible.
+ * Confirms beeps after Sonner updates the list (async `setTimeout` / `flushSync`) and drives
+ * background system notifications. `installSonnerToastSound()` also calls `playToastSound` in the
+ * same turn as `toast.success` / `error` / etc. so autoplay policy is satisfied; duplicate chimes
+ * are suppressed briefly in `playToastSound`.
  */
 export function ToastSoundBridge() {
   const { toasts } = useSonner();
