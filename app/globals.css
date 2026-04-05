@@ -1,92 +1,144 @@
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/*
+  NamasQr — navy + saffron / orange. Tailwind uses hsl(var(--token)).
+  Values are space-separated HSL components.
+*/
 @layer base {
   :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
+    --background: 40 33% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    /* Saffron / orange — primary CTAs */
+    --primary: 24 95% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 18% 93%;
+    --secondary-foreground: 222 47% 18%;
+    --muted: 40 25% 94%;
+    --muted-foreground: 222 12% 40%;
+    --accent: 24 80% 95%;
+    --accent-foreground: 222 47% 18%;
+    --destructive: 0 72% 48%;
     --destructive-foreground: 0 0% 98%;
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --radius: 0.625rem;
-    --chart-1: oklch(0.809 0.105 251.813);
-    --chart-2: oklch(0.623 0.214 259.815);
-    --chart-3: oklch(0.546 0.245 262.881);
-    --chart-4: oklch(0.488 0.243 264.376);
-    --chart-5: oklch(0.424 0.199 265.638);
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --border: 40 18% 88%;
+    --input: 40 18% 88%;
+    --ring: 24 95% 45%;
+    --radius: 0.875rem;
+    --chart-1: 24 95% 48%;
+    --chart-2: 222 47% 35%;
+    --chart-3: 160 45% 38%;
+    --chart-4: 43 74% 58%;
+    --chart-5: 340 70% 55%;
+    /* Deep navy sidebar */
+    --sidebar: 222 47% 16%;
+    --sidebar-foreground: 40 20% 96%;
+    --sidebar-primary: 24 95% 55%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 222 40% 22%;
+    --sidebar-accent-foreground: 40 20% 96%;
+    --sidebar-border: 222 35% 24%;
+    --sidebar-ring: 24 95% 55%;
+    --brand-navy: 222 47% 16%;
+    --brand-orange: 24 95% 48%;
   }
 
   .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
+    --background: 222 44% 8%;
+    --foreground: 40 25% 96%;
+    --card: 222 40% 11%;
+    --card-foreground: 40 25% 96%;
+    --popover: 222 40% 11%;
+    --popover-foreground: 40 25% 96%;
+    --primary: 24 95% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 30% 18%;
+    --secondary-foreground: 40 25% 96%;
+    --muted: 222 25% 18%;
+    --muted-foreground: 40 15% 65%;
+    --accent: 222 30% 18%;
+    --accent-foreground: 40 25% 96%;
+    --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 98%;
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.809 0.105 251.813);
-    --chart-2: oklch(0.623 0.214 259.815);
-    --chart-3: oklch(0.546 0.245 262.881);
-    --chart-4: oklch(0.488 0.243 264.376);
-    --chart-5: oklch(0.424 0.199 265.638);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --border: 222 28% 20%;
+    --input: 222 28% 20%;
+    --ring: 24 95% 55%;
+    --chart-1: 24 95% 58%;
+    --chart-2: 210 60% 70%;
+    --chart-3: 160 50% 55%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 340 75% 55%;
+    --sidebar: 222 47% 10%;
+    --sidebar-foreground: 40 25% 96%;
+    --sidebar-primary: 24 95% 55%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 222 35% 16%;
+    --sidebar-accent-foreground: 40 25% 96%;
+    --sidebar-border: 222 30% 18%;
+    --sidebar-ring: 24 95% 55%;
+    --brand-navy: 222 47% 10%;
+    --brand-orange: 24 95% 55%;
   }
 
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
 
   body {
-    @apply antialiased bg-background text-foreground;
+    @apply min-h-dvh bg-background font-sans text-foreground antialiased;
   }
-  .theme {
-    --font-sans: var(--font-sans);
+
+  /**
+   * Orange scrollbars (primary saffron) — Firefox + WebKit, all scrollable regions.
+   */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary)) hsl(var(--muted));
   }
-  html {
-    @apply font-sans;
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 9999px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary) / 0.92);
+    border-radius: 9999px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary));
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Invoice print: hide rest of page when printing */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .invoice-print-root,
+  .invoice-print-root * {
+    visibility: visible;
+  }
+  .invoice-print-root {
+    position: fixed;
+    inset: 0;
+    background: white;
+    overflow: auto;
   }
 }
