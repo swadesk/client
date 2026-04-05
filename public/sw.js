@@ -97,20 +97,48 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const raw = event.notification.data && event.notification.data.url;
-  const url =
-    typeof raw === "string" && raw.length > 0
-      ? raw
-      : new URL("/dashboard", self.location.origin).href;
+
+  const data = event.notification.data || {};
+  let raw = typeof data.url === "string" ? data.url : "";
+  if (!raw) raw = "/dashboard";
+  let target;
+  try {
+    target = new URL(raw, self.location.origin).href;
+  } catch {
+    target = new URL("/dashboard", self.location.origin).href;
+  }
 
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+    (async () => {
+      const clientList = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+
       for (const client of clientList) {
-        if ("navigate" in client && typeof client.navigate === "function") {
-          return client.navigate(url).then(() => client.focus());
+        if (typeof client.url !== "string" || !client.url.startsWith(self.location.origin)) {
+          continue;
+        }
+
+        try {
+          if ("navigate" in client && typeof client.navigate === "function") {
+            const navResult = client.navigate(target);
+            if (navResult != null && typeof navResult.then === "function") {
+              await navResult.catch(() => {});
+            }
+          }
+          if ("focus" in client && typeof client.focus === "function") {
+            return await client.focus();
+          }
+        } catch {
+          /* try next client */
         }
       }
-      if (self.clients.openWindow) return self.clients.openWindow(url);
-    }),
+
+      if (self.clients.openWindow) {
+        const w = await self.clients.openWindow(target);
+        if (w) return w;
+      }
+    })(),
   );
 });
