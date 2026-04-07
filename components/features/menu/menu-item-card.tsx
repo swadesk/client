@@ -13,11 +13,14 @@ export function MenuItemCard({
   onToggleAvailability,
   onEdit,
   onRequestDelete,
+  availabilityPending,
 }: {
   item: MenuItem;
   onToggleAvailability: (itemId: string, available: boolean) => void;
   onEdit: (item: MenuItem) => void;
   onRequestDelete?: (item: MenuItem) => void;
+  /** Disables the availability switch while the PATCH is in flight. */
+  availabilityPending?: boolean;
 }) {
   return (
     <div
@@ -84,6 +87,7 @@ export function MenuItemCard({
           </span>
           <Switch
             checked={item.available}
+            disabled={availabilityPending}
             onCheckedChange={(checked) => onToggleAvailability(item.id, checked)}
             aria-label="Toggle availability"
           />

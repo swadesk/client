@@ -13,6 +13,11 @@ export type RestaurantMenuResponse = {
   name: string;
   /** Present when the backend includes venue branding on the public menu payload. */
   logoUrl?: string;
+  /**
+   * Optional `#rrggbb` brand accent for the guest QR menu (wins over logo-derived color).
+   * If omitted, the client may sample `logoUrl` when CORS allows.
+   */
+  brandPrimary?: string | null;
   categories: MenuCategory[];
   items: MenuItem[];
 };
@@ -72,8 +77,19 @@ export type WaiterUpdateOrderRequest = {
   restaurantId: string;
   orderId: string;
   status: Exclude<OrderStatus, "Completed">;
+  /**
+   * When the order exposes `kitchenBatches`, send the batch being updated.
+   * Omit for legacy single-status orders (whole `orderId` moves together).
+   */
+  kitchenBatchId?: string;
 };
 export type WaiterUpdateOrderResponse = ApiOk;
+
+/** GET /api/waiter/me?restaurantId= — optional; links the session to a floor waiter profile id. */
+export type WaiterMeResponse = {
+  waiterId?: string;
+  id?: string;
+};
 
 export type CustomerPlaceOrderRequest = {
   restaurantId: string;
@@ -132,6 +148,7 @@ export type Restaurant = import("@/types/restaurant").Restaurant;
 
 /** Menu CRUD */
 export type AdminCreateCategoryRequest = { restaurantId: string; name: string };
+export type AdminUpdateCategoryRequest = { restaurantId: string; categoryId: string; name: string };
 /** Text fields for POST /admin/menu/items (multipart). Optional file field `image` is appended by the client. */
 export type AdminCreateItemRequest = {
   restaurantId: string;

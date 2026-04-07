@@ -13,6 +13,11 @@ export type AuthUser = {
   name: string;
   email: string;
   photoUrl?: string | null;
+  /**
+   * When the backend links auth users to floor staff rows, this matches `Table.waiterId`.
+   * If omitted, the client tries `/api/waiter/me`, then name match against the waiters roster, then `id`.
+   */
+  floorWaiterId?: string | null;
   globalRole: GlobalRole;
   restaurantId: string | null;
   role: StaffRoleApi | null;

@@ -60,7 +60,8 @@ export function TopHeader({
   const roleLabel =
     user?.globalRole === "SuperAdmin" ? "SuperAdmin" : user?.role ?? (user ? "Staff" : null);
   const canManageTeam = user?.globalRole === "SuperAdmin" || user?.role === "Admin";
-  const floorRole = user?.role === "Waiter" || user?.role === "Manager";
+  const floorRole =
+    user?.role === "Waiter" || user?.role === "Manager" || user?.role === "Kitchen";
 
   return (
     <header className="sticky top-0 z-30 shrink-0 border-b border-border/70 bg-background/95 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/80">

@@ -24,8 +24,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { WaiterUpdateOrderRequest } from "@/types/api";
-import type { Order } from "@/types/order";
+import type { KitchenBatchStatus, Order } from "@/types/order";
 import type { KitchenPendingOrdersGetResponse } from "@/types/api";
+import { buildKitchenBoardUnits, makeKitchenBoardId } from "@/lib/kitchen-board-units";
+import { applyKitchenStatusUpdate, waiterPayloadForKitchenUnit } from "@/lib/kitchen-order-mutate";
 import { canAccessRouteForUser } from "@/components/layout/nav-items";
 import { getPostAuthRedirectPath } from "@/lib/auth-routing";
 
@@ -35,7 +37,7 @@ export default function KitchenPage() {
   const user = useAuthStore((s) => s.user);
   const canViewKitchen = canAccessRouteForUser(user, "/kitchen");
   const qc = useQueryClient();
-  const [statusOverrides, setStatusOverrides] = React.useState<Record<string, Order["status"]>>({});
+  const [statusOverrides, setStatusOverrides] = React.useState<Record<string, KitchenBatchStatus>>({});
   const [orderToDelete, setOrderToDelete] = React.useState<Order | null>(null);
   useRealtimeOrders(restaurantId);
 
@@ -60,10 +62,14 @@ export default function KitchenPage() {
       const queryKey = qk.kitchenOrders(variables.restaurantId);
       await qc.cancelQueries({ queryKey });
       const previousOrders = qc.getQueryData<KitchenPendingOrdersGetResponse>(queryKey);
-      const optimisticOrders: Order[] = (previousOrders ?? []).map((o) =>
-        o.id === variables.orderId ? { ...o, status: variables.status } : o,
-      );
-      setStatusOverrides((prev) => ({ ...prev, [variables.orderId]: variables.status }));
+      const boardId = variables.kitchenBatchId
+        ? makeKitchenBoardId(variables.orderId, variables.kitchenBatchId)
+        : variables.orderId;
+      const optimisticOrders = applyKitchenStatusUpdate(previousOrders ?? [], variables);
+      setStatusOverrides((prev) => ({
+        ...prev,
+        [boardId]: variables.status as KitchenBatchStatus,
+      }));
       qc.setQueryData(queryKey, optimisticOrders);
     },
     onError: () => {
@@ -73,12 +79,9 @@ export default function KitchenPage() {
     onSuccess: (_data, variables) => {
       toast.success("Order updated");
       const queryKey = qk.kitchenOrders(variables.restaurantId);
-      // Align cache with server-accepted status without an immediate refetch (refetches can race with stale data).
       qc.setQueryData<KitchenPendingOrdersGetResponse>(queryKey, (old) => {
         if (!old) return old;
-        return old.map((o) =>
-          o.id === variables.orderId ? { ...o, status: variables.status } : o,
-        );
+        return applyKitchenStatusUpdate(old, variables);
       });
     },
   });
@@ -92,7 +95,9 @@ export default function KitchenPage() {
       setOrderToDelete(null);
       setStatusOverrides((prev) => {
         const next = { ...prev };
-        delete next[orderId];
+        for (const k of Object.keys(next)) {
+          if (k === orderId || k.startsWith(`${orderId}__KB__`)) delete next[k];
+        }
         return next;
       });
       qc.setQueryData<KitchenPendingOrdersGetResponse>(qk.kitchenOrders(rid), (old) =>
@@ -107,11 +112,23 @@ export default function KitchenPage() {
 
   const orders = React.useMemo(() => {
     return (data ?? []).map((order) => {
-      const override = statusOverrides[order.id];
-      if (!override || override === order.status) return order;
-      return { ...order, status: override };
+      if (order.kitchenBatches?.length) {
+        return {
+          ...order,
+          kitchenBatches: order.kitchenBatches.map((b) => {
+            const bid = makeKitchenBoardId(order.id, b.id);
+            const ov = statusOverrides[bid];
+            return ov ? { ...b, status: ov } : b;
+          }),
+        };
+      }
+      const ov = statusOverrides[order.id];
+      if (!ov || ov === order.status) return order;
+      return { ...order, status: ov };
     });
   }, [data, statusOverrides]);
+
+  const kitchenUnits = React.useMemo(() => buildKitchenBoardUnits(orders), [orders]);
 
   if (!restaurantId) {
     return (
@@ -140,7 +157,7 @@ export default function KitchenPage() {
     <div className="space-y-12">
       <PageHeader
         title="Kitchen Display"
-        description="Large, glanceable cards for kitchen staff."
+        description="Glanceable tickets for kitchen staff. Drag cards between columns or use Move ticket on each card."
         actions={
           <div className="text-xs text-muted-foreground">Auto refresh every 10s</div>
         }
@@ -157,10 +174,10 @@ export default function KitchenPage() {
         className="space-y-12"
       >
         <KitchenBoard
-          orders={orders}
+          units={kitchenUnits}
           restaurantId={restaurantId}
-          onOrderStatusChange={(orderId, status) =>
-            mutation.mutate({ restaurantId, orderId, status })
+          onUnitStatusChange={(unit, status) =>
+            mutation.mutate(waiterPayloadForKitchenUnit(restaurantId, unit, status))
           }
           onOrderDelete={(orderId) => {
             const o = orders.find((x) => x.id === orderId);

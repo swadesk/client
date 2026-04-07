@@ -1,5 +1,17 @@
 import type { MenuCategory, MenuItem } from "@/types/menu";
 
+/** APIs sometimes return `"false"` / `"true"` strings; `Boolean("false")` is wrongly true. */
+function coerceAvailable(value: unknown): boolean {
+  if (value === false || value === 0) return false;
+  if (value === true || value === 1) return true;
+  if (typeof value === "string") {
+    const t = value.trim().toLowerCase();
+    if (t === "false" || t === "0" || t === "no" || t === "off") return false;
+    if (t === "true" || t === "1" || t === "yes" || t === "on") return true;
+  }
+  return Boolean(value);
+}
+
 /**
  * Maps common API shapes (camelCase / snake_case / alternate keys) to our menu types.
  */
@@ -37,7 +49,7 @@ export function normalizeAdminMenuPayload(data: unknown): {
           const categoryId = x.categoryId ?? x.category_id;
           const name = x.name;
           const priceRaw = x.priceCents ?? x.price_cents;
-          const available = x.available ?? true;
+          const availableRaw = x.available ?? x.is_available ?? x.isAvailable ?? true;
           const description = x.description;
           const imageUrl = x.imageUrl ?? x.image_url;
           if (typeof id !== "string" || typeof categoryId !== "string" || typeof name !== "string") {
@@ -57,7 +69,7 @@ export function normalizeAdminMenuPayload(data: unknown): {
             description: typeof description === "string" ? description : undefined,
             imageUrl: typeof imageUrl === "string" ? imageUrl : undefined,
             priceCents,
-            available: Boolean(available),
+            available: coerceAvailable(availableRaw),
           };
         })
         .filter((it): it is MenuItem => it != null)

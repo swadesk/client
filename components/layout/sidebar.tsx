@@ -57,7 +57,9 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const user = useAuthStore((s) => s.user);
   const restaurantId = useRestaurantStore((s) => s.activeRestaurantId);
   const activeRestaurant = useActiveRestaurant();
-  const qrMenuHref = restaurantId ? `/qr-menu/${restaurantId}/table_01` : "/login";
+  const qrMenuHref = restaurantId
+    ? `/qr-menu/${restaurantId}/table_01?pickTable=1`
+    : "/login";
   const showSuperAdmin = isSuperAdmin(user);
   const memberNavItems = getNavItemsForUser(user);
   const memberNavItemsWithIcons = memberNavItems.map((item) => ({

@@ -44,6 +44,7 @@ import { fetchActiveFloorOrders } from "@/lib/floor-orders";
 import { isOrderCompletedStatus } from "@/lib/order-status";
 import { canAccessRouteForUser } from "@/components/layout/nav-items";
 import { normalizeTablesResponse } from "@/lib/tables-normalize";
+import { resolveFloorWaiterProfileId } from "@/lib/floor-waiter-profile";
 
 export default function TablesPage() {
   const router = useRouter();
@@ -51,6 +52,7 @@ export default function TablesPage() {
   const user = useAuthStore((s) => s.user);
   const canViewTables = canAccessRouteForUser(user, "/tables");
   const canManageTablesLayout = user?.role === "Admin" || user?.role === "Manager";
+  const waiterMode = user?.globalRole !== "SuperAdmin" && user?.role === "Waiter";
   const mayCollectPayment = canCollectTablePayments(user);
   useRealtimeOrders(restaurantId);
   const qc = useQueryClient();
@@ -81,6 +83,20 @@ export default function TablesPage() {
     enabled: !!restaurantId && canViewTables,
   });
 
+  const waiterMeQuery = useQuery({
+    queryKey: qk.waiterMe(restaurantId ?? "", user?.id ?? ""),
+    queryFn: () => api.waiter.me(restaurantId!),
+    enabled: !!restaurantId && canViewTables && waiterMode && !!user?.id,
+    retry: false,
+  });
+
+  const waitersForProfileQuery = useQuery({
+    queryKey: [...qk.adminWaiters(restaurantId ?? ""), "waiter-profile"],
+    queryFn: () => api.admin.waiters(restaurantId!),
+    enabled: !!restaurantId && canViewTables && waiterMode,
+    retry: false,
+  });
+
   const kitchenOrdersQuery = useQuery({
     queryKey: [...qk.floorOrders(restaurantId ?? ""), "active", user?.role ?? "guest"],
     queryFn: () =>
@@ -107,10 +123,11 @@ export default function TablesPage() {
     queryFn: () => api.admin.waiters(restaurantId!),
     enabled: !!restaurantId && canViewTables && canManageTablesLayout,
   });
-  const { data: membersData } = useQuery({
+  const { data: membersData, isFetched: membersFetched } = useQuery({
     queryKey: ["restaurant.members", restaurantId],
     queryFn: () => api.restaurants.members(restaurantId!),
-    enabled: !!restaurantId && canManageTablesLayout,
+    enabled: !!restaurantId && canViewTables && (canManageTablesLayout || waiterMode),
+    retry: false,
   });
   const selectedInvoiceQuery = useQuery({
     queryKey: qk.invoiceDetail(restaurantId ?? "", selectedInvoiceId ?? ""),
@@ -125,6 +142,36 @@ export default function TablesPage() {
 
   const tables = data ?? [];
   const waiters = waitersData ?? [];
+  const profileResolutionReady =
+    !waiterMode ||
+    (waiterMeQuery.isFetched && waitersForProfileQuery.isFetched && membersFetched);
+  const floorWaiterProfileId = React.useMemo(
+    () =>
+      waiterMode
+        ? resolveFloorWaiterProfileId(user, {
+            waiterMe: waiterMeQuery.data,
+            members: membersData,
+            waiters: waitersForProfileQuery.data,
+          })
+        : null,
+    [
+      waiterMode,
+      user,
+      waiterMeQuery.data,
+      membersData,
+      waitersForProfileQuery.data,
+    ],
+  );
+  const tablesForStaff = React.useMemo(() => {
+    if (!waiterMode) return tables;
+    if (!floorWaiterProfileId) {
+      // Cannot map this login to `Table.waiterId` (floor roster id). Avoid filtering with the wrong id
+      // (e.g. auth user id). Prefer a backend-scoped `GET /api/waiter/tables` or `user.floorWaiterId` / `/api/waiter/me`.
+      return tables;
+    }
+    return tables.filter((t) => t.waiterId === floorWaiterProfileId);
+  }, [waiterMode, floorWaiterProfileId, tables]);
+  const layoutLoading = isLoading || (waiterMode && !profileResolutionReady);
   const eligibleWaiters = React.useMemo(() => {
     const nameToMemberRoles = new Map<string, RestaurantMemberRow[]>();
     for (const member of membersData ?? []) {
@@ -274,32 +321,39 @@ export default function TablesPage() {
       />
 
       <QueryState
-        isLoading={isLoading}
+        isLoading={layoutLoading}
         isError={isError}
         error={error}
         onRetry={() => refetch()}
-        empty={!isLoading && !isError && tables.length === 0}
+        empty={!layoutLoading && !isError && tablesForStaff.length === 0}
         errorFallbackMessage="Failed to load tables."
         loadingSkeleton={<TableGridSkeleton />}
         className="space-y-12"
         emptyState={
-          <EmptyState
-            title="No tables"
-            description={
-              canManageTablesLayout
-                ? "Add tables for this location."
-                : "Tables will appear here once a manager adds them for this venue."
-            }
-            primaryAction={
-              canManageTablesLayout
-                ? { label: "Add table", onClick: () => setOpen(true) }
-                : undefined
-            }
-          />
+          waiterMode && tables.length > 0 ? (
+            <EmptyState
+              title="No tables assigned to you"
+              description="Ask a manager to assign your station on Staffs, or confirm your account matches your floor profile."
+            />
+          ) : (
+            <EmptyState
+              title="No tables"
+              description={
+                canManageTablesLayout
+                  ? "Add tables for this location."
+                  : "Tables will appear here once a manager adds them for this venue."
+              }
+              primaryAction={
+                canManageTablesLayout
+                  ? { label: "Add table", onClick: () => setOpen(true) }
+                  : undefined
+              }
+            />
+          )
         }
       >
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {tables.map((t: Table) => (
+          {tablesForStaff.map((t: Table) => (
             <TableCard
               key={t.id}
               table={t}
@@ -308,7 +362,13 @@ export default function TablesPage() {
                 activeOrderSignals.activeOrderTableNumbers,
                 activeOrderSignals.activeOrderTableIds,
               )}
-              waiterName={t.waiterId ? waiterMap.get(t.waiterId) ?? null : null}
+              waiterName={
+                waiterMode
+                  ? user?.name ?? null
+                  : t.waiterId
+                    ? (waiterMap.get(t.waiterId) ?? null)
+                    : null
+              }
               waiters={eligibleWaiters.map((w) => ({ id: w.id, name: w.name }))}
               onAssign={canManageTablesLayout ? handleAssign : undefined}
               isAssigning={assignMutation.isPending}

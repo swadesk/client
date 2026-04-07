@@ -5,6 +5,8 @@ export type WaiterStatus = "Active" | "Break" | "Offline";
 export type Waiter = {
   id: string;
   name: string;
+  /** When the backend links floor staff to auth accounts (matches `RestaurantMemberRow.userId`). */
+  userId?: string | null;
   /** From upload URL when set on the server. */
   photoUrl?: string | null;
   role: WaiterRole;

@@ -37,8 +37,10 @@ import {
 import { cn } from "@/lib/utils";
 import { canAccessRouteForUser } from "@/components/layout/nav-items";
 import { getPostAuthRedirectPath } from "@/lib/auth-routing";
+import { resolveStaffAvatarUrl } from "@/lib/staff-photo-url";
+import { normalizeWaiterFromApi } from "@/lib/waiter-normalize";
 import type { AdminUpdateWaiterStatusRequest } from "@/types/api";
-import type { StaffRoleBody } from "@/types/auth";
+import type { RestaurantMemberRow, StaffRoleApi, StaffRoleBody } from "@/types/auth";
 import type { Waiter, WaiterRole, WaiterStatus } from "@/types/waiter";
 
 const MEMBER_INVITE_ROLES: Exclude<StaffRoleBody, "ADMIN">[] = ["WAITER", "MANAGER", "KITCHEN"];
@@ -78,6 +80,90 @@ function normalizeName(v: string): string {
   return v.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+/**
+ * If `createWaiter` + `createMember` both create a floor row (or the user saves twice), the API can
+ * return multiple waiters with the same display name but only one venue member with that name.
+ * Collapse those to a single visible row (prefer more table assignments).
+ */
+function dedupeWaitersOnePerNameWhenSingleMember(
+  waiters: Waiter[],
+  members: RestaurantMemberRow[],
+): Waiter[] {
+  const memberCountByName = new Map<string, number>();
+  for (const m of members) {
+    const k = normalizeName(m.name);
+    memberCountByName.set(k, (memberCountByName.get(k) ?? 0) + 1);
+  }
+  const byName = new Map<string, Waiter[]>();
+  for (const w of waiters) {
+    const k = normalizeName(w.name);
+    const arr = byName.get(k) ?? [];
+    arr.push(w);
+    byName.set(k, arr);
+  }
+  const picked: Waiter[] = [];
+  for (const [, group] of byName) {
+    if (group.length === 1) {
+      picked.push(group[0]!);
+      continue;
+    }
+    const nameKey = normalizeName(group[0]!.name);
+    if ((memberCountByName.get(nameKey) ?? 0) !== 1) {
+      picked.push(...group);
+      continue;
+    }
+    const sorted = [...group].sort((a, b) => {
+      const ta = a.assignedTableIds?.length ?? 0;
+      const tb = b.assignedTableIds?.length ?? 0;
+      if (tb !== ta) return tb - ta;
+      return b.id.localeCompare(a.id);
+    });
+    picked.push(sorted[0]!);
+  }
+  const order = new Map(waiters.map((w, i) => [w.id, i]));
+  picked.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+  return picked;
+}
+
+/** Match floor waiter row to a venue member when names align (and role when possible). */
+function findLinkedMemberForWaiter(
+  waiter: Waiter,
+  members: RestaurantMemberRow[],
+  appRole: StaffRoleApi | null | undefined,
+): RestaurantMemberRow | null {
+  const key = normalizeName(waiter.name);
+  const role = appRole ?? "Waiter";
+  const byNameAndRole = members.filter(
+    (m) => normalizeName(m.name) === key && m.role === role,
+  );
+  if (byNameAndRole.length === 1) return byNameAndRole[0]!;
+  const byName = members.filter((m) => normalizeName(m.name) === key);
+  if (byName.length === 1) return byName[0]!;
+  return null;
+}
+
+function deleteStaffButtonLabel(appRole: StaffRoleApi | null | undefined): string {
+  switch (appRole) {
+    case "Kitchen":
+      return "Delete kitchen staff";
+    case "Manager":
+      return "Delete manager";
+    default:
+      return "Delete waiter";
+  }
+}
+
+function deleteStaffDialogTitle(appRole: StaffRoleApi | null | undefined): string {
+  switch (appRole) {
+    case "Kitchen":
+      return "Delete kitchen staff?";
+    case "Manager":
+      return "Delete manager?";
+    default:
+      return "Delete waiter?";
+  }
+}
+
 function getStatusColors(status: WaiterStatus) {
   switch (status) {
     case "Active":
@@ -106,19 +192,25 @@ function getStatusColors(status: WaiterStatus) {
 
 function WaiterCard({
   waiter,
+  memberPhotoUrl,
   tableIdToNumber,
   appRole,
   onStatusChange,
   onRequestDelete,
+  deleteButtonLabel,
   isUpdating,
 }: {
   waiter: Waiter;
+  /** Venue member profile photo when the floor row has no `photoUrl`. */
+  memberPhotoUrl?: string | null;
   tableIdToNumber: Map<string, number>;
   appRole?: string | null;
   onStatusChange: (waiterId: string, status: WaiterStatus) => void;
   onRequestDelete?: (waiter: Waiter) => void;
+  deleteButtonLabel: string;
   isUpdating: boolean;
 }) {
+  const avatarSrc = resolveStaffAvatarUrl(waiter.photoUrl ?? memberPhotoUrl);
   const normalizedAppRole = (appRole ?? "Waiter").toLowerCase();
   const canHaveTables = normalizedAppRole === "waiter";
   const tableLabels =
@@ -158,8 +250,8 @@ function WaiterCard({
             waiter.status === "Offline" && "ring-slate-300/30 dark:ring-slate-500/30",
           )}
         >
-          {waiter.photoUrl ? (
-            <AvatarImage src={waiter.photoUrl} alt="" className="object-cover" />
+          {avatarSrc ? (
+            <AvatarImage src={avatarSrc} alt="" className="object-cover" />
           ) : null}
           <AvatarFallback
             className={cn(
@@ -241,7 +333,7 @@ function WaiterCard({
               disabled={isUpdating}
             >
               <Trash2 className="mr-2 size-4" />
-              Delete waiter
+              {deleteButtonLabel}
             </Button>
           ) : null}
         </div>
@@ -318,7 +410,10 @@ export default function WaitersPage() {
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: qk.adminWaiters(restaurantId ?? ""),
-    queryFn: () => api.admin.waiters(restaurantId!),
+    queryFn: async () => {
+      const rows = await api.admin.waiters(restaurantId!);
+      return rows.map((w) => normalizeWaiterFromApi(w));
+    },
     enabled: !!restaurantId,
   });
 
@@ -336,8 +431,16 @@ export default function WaitersPage() {
     enabled: !!restaurantId,
   });
 
-  const waiters = data ?? [];
+  const waitersRaw = data ?? [];
   const tables = tablesData ?? [];
+  const waiters = React.useMemo(() => {
+    const byId = new Map<string, Waiter>();
+    for (const w of waitersRaw) {
+      if (!byId.has(w.id)) byId.set(w.id, w);
+    }
+    const uniqueById = [...byId.values()];
+    return dedupeWaitersOnePerNameWhenSingleMember(uniqueById, membersData ?? []);
+  }, [waitersRaw, membersData]);
   const memberEmailSet = React.useMemo(
     () => new Set((membersData ?? []).map((m) => m.email.trim().toLowerCase())),
     [membersData],
@@ -354,7 +457,7 @@ export default function WaitersPage() {
       arr.push(member);
       groupedMembers.set(key, arr);
     }
-    const map = new Map<string, string>();
+    const map = new Map<string, StaffRoleApi>();
     for (const waiter of waiters) {
       const matches = groupedMembers.get(normalizeName(waiter.name)) ?? [];
       if (matches.length === 1) map.set(waiter.id, matches[0]!.role);
@@ -374,6 +477,7 @@ export default function WaitersPage() {
   }, [appRoleByWaiterId, waiters]);
 
   const addStaffMutation = useMutation({
+    retry: false,
     mutationFn: async () => {
       const rid = restaurantId!;
       const count = loginRole === "WAITER" ? Number(assignedTables) : 0;
@@ -468,9 +572,44 @@ export default function WaitersPage() {
   });
 
   const deleteWaiterMutation = useMutation({
-    mutationFn: (waiterId: string) => api.admin.deleteWaiter(restaurantId!, waiterId),
-    onSuccess: () => {
-      toast.success("Waiter deleted");
+    mutationFn: async (waiter: Waiter) => {
+      const rid = restaurantId!;
+      const appRole = appRoleByWaiterId.get(waiter.id) ?? "Waiter";
+      const linked = findLinkedMemberForWaiter(waiter, membersData ?? [], appRole);
+      await api.admin.deleteWaiter(rid, waiter.id);
+      let memberRemoved = false;
+      let memberDeleteFailed = false;
+      if (linked) {
+        try {
+          await api.restaurants.deleteMember(rid, linked.userId);
+          memberRemoved = true;
+        } catch (err) {
+          const status = (err as ApiError)?.status;
+          if (status !== 404) memberDeleteFailed = true;
+          else memberRemoved = true;
+        }
+      }
+      return { appRole, memberRemoved, memberDeleteFailed, hadLinkedMember: !!linked };
+    },
+    onSuccess: (result) => {
+      const roleLabel =
+        result.appRole === "Kitchen"
+          ? "Kitchen staff"
+          : result.appRole === "Manager"
+            ? "Manager"
+            : "Waiter";
+      if (result.memberDeleteFailed) {
+        toast.warning(`${roleLabel} removed from the floor`, {
+          description:
+            "The login account could not be removed from this venue. The same email may still be blocked until an admin deletes the membership or the API supports removing members.",
+        });
+      } else {
+        toast.success(
+          result.hadLinkedMember && result.memberRemoved
+            ? `${roleLabel} and venue login removed`
+            : `${roleLabel} deleted`,
+        );
+      }
       setWaiterToDelete(null);
       if (restaurantId) {
         void qc.invalidateQueries({ queryKey: qk.adminWaiters(restaurantId) });
@@ -478,7 +617,7 @@ export default function WaitersPage() {
         invalidateStaffTableQueries(qc, restaurantId);
       }
     },
-    onError: () => toast.error("Failed to delete waiter"),
+    onError: () => toast.error("Failed to delete staff"),
   });
 
   function handleStatusChange(waiterId: string, newStatus: WaiterStatus) {
@@ -487,7 +626,7 @@ export default function WaitersPage() {
   }
 
   function submitAddStaff() {
-    if (!restaurantId) return;
+    if (!restaurantId || addStaffMutation.isPending) return;
     const emailTrim = email.trim().toLowerCase();
     if (emailTrim && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim)) {
       toast.error("Enter a valid work email or leave it empty");
@@ -607,10 +746,20 @@ export default function WaitersPage() {
               <WaiterCard
                 key={waiter.id}
                 waiter={waiter}
+                memberPhotoUrl={
+                  findLinkedMemberForWaiter(
+                    waiter,
+                    membersData ?? [],
+                    appRoleByWaiterId.get(waiter.id) ?? "Waiter",
+                  )?.photoUrl ?? null
+                }
                 tableIdToNumber={tableIdToNumber}
                 appRole={appRoleByWaiterId.get(waiter.id) ?? null}
                 onStatusChange={handleStatusChange}
                 onRequestDelete={(w) => setWaiterToDelete(w)}
+                deleteButtonLabel={deleteStaffButtonLabel(
+                  appRoleByWaiterId.get(waiter.id) ?? null,
+                )}
                 isUpdating={statusMutation.isPending}
               />
             ))}
@@ -622,92 +771,17 @@ export default function WaitersPage() {
                 <Users className="size-6 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="font-semibold text-foreground">Coverage overview</h3>
+                <h3 className="font-semibold text-foreground">Floor coverage</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Keep enough active staff on the floor and rebalance tables during rush periods.
+                  Use the cards above for each person&apos;s status, floor role, and table list. This
+                  block is only a shortcut to table assignment so you don&apos;t see the same staff
+                  twice on the page.
                 </p>
               </div>
             </div>
-            <div className="mt-6 space-y-3">
-              {waiters.map((waiter) => {
-                const colors = getStatusColors(waiter.status);
-                const tableLabels =
-                  waiter.assignedTableIds.length > 0
-                    ? waiter.assignedTableIds
-                        .map((id) => {
-                          const n = tableIdToNumber.get(id);
-                          return n != null ? `T${n}` : null;
-                        })
-                        .filter(Boolean)
-                        .join(", ") || "—"
-                    : "—";
-                return (
-                  <div
-                    key={waiter.id}
-                    className="min-w-0 overflow-hidden rounded-xl border border-border/30 bg-muted/20 px-4 py-3 transition-colors"
-                  >
-                    <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-3">
-                      <span className="min-w-0 truncate text-sm font-medium text-foreground">{waiter.name}</span>
-                      <Select
-                        value={waiter.status}
-                        onValueChange={(v) => handleStatusChange(waiter.id, v as WaiterStatus)}
-                        disabled={statusMutation.isPending}
-                      >
-                        <SelectTrigger
-                          className={cn(
-                            "h-8 w-[120px] shrink-0 text-xs font-medium sm:h-7",
-                            colors.bg,
-                            colors.border,
-                            colors.text,
-                            "border",
-                          )}
-                        >
-                          <span className={cn("mr-1.5 size-1.5 shrink-0 rounded-full", colors.dot)} />
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {STATUS_OPTIONS.map((s) => {
-                            const c = getStatusColors(s);
-                            return (
-                              <SelectItem key={s} value={s} className={cn("font-medium", c.text)}>
-                                <span className={cn("mr-2 inline-block size-1.5 rounded-full", c.dot)} />
-                                {s}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="mt-2 h-1.5 rounded-full bg-muted">
-                      <div
-                        className={cn(
-                          "h-1.5 rounded-full",
-                          waiter.status === "Active" && "bg-emerald-500",
-                          waiter.status === "Break" && "bg-amber-500",
-                          waiter.status === "Offline" && "bg-slate-400",
-                        )}
-                        style={{
-                          width: `${Math.min(
-                            ((appRoleByWaiterId.get(waiter.id) ?? "Waiter") === "Waiter"
-                              ? waiter.assignedTables
-                              : 0) * 18,
-                            100,
-                          )}%`,
-                        }}
-                      />
-                    </div>
-                    <div className="mt-1.5 text-xs text-muted-foreground">
-                      {(appRoleByWaiterId.get(waiter.id) ?? "Waiter") === "Waiter"
-                        ? `${appRoleByWaiterId.get(waiter.id) ?? "Waiter"} • ${waiter.role} • ${tableLabels}`
-                        : `${appRoleByWaiterId.get(waiter.id) ?? "Waiter"} • ${waiter.role}`}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
             <Link
               href="/tables"
-              className="mt-4 flex items-center justify-between rounded-xl bg-muted/30 p-4 text-sm font-medium text-primary transition-colors hover:bg-muted/50"
+              className="mt-6 flex items-center justify-between rounded-xl bg-muted/30 p-4 text-sm font-medium text-primary transition-colors hover:bg-muted/50"
             >
               Manage table assignments
               <ArrowRight className="size-4" />
@@ -719,9 +793,19 @@ export default function WaitersPage() {
       <Dialog open={!!waiterToDelete} onOpenChange={(o) => !o && setWaiterToDelete(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete waiter?</DialogTitle>
+            <DialogTitle>
+              {deleteStaffDialogTitle(
+                waiterToDelete ? appRoleByWaiterId.get(waiterToDelete.id) ?? null : null,
+              )}
+            </DialogTitle>
             <DialogDescription>
-              {waiterToDelete?.name} will be removed. Assigned tables will be unassigned.
+              {waiterToDelete?.name} will be removed from the floor
+              {waiterToDelete &&
+              (appRoleByWaiterId.get(waiterToDelete.id) ?? "Waiter") === "Waiter"
+                ? "; assigned tables will be unassigned"
+                : ""}
+              . When the venue login can be resolved, their membership for this restaurant is removed
+              so the same email can be invited again.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:justify-end">
@@ -732,7 +816,7 @@ export default function WaitersPage() {
               variant="destructive"
               disabled={deleteWaiterMutation.isPending}
               onClick={() => {
-                if (waiterToDelete) deleteWaiterMutation.mutate(waiterToDelete.id);
+                if (waiterToDelete) deleteWaiterMutation.mutate(waiterToDelete);
               }}
             >
               {deleteWaiterMutation.isPending ? "Deleting…" : "Delete"}

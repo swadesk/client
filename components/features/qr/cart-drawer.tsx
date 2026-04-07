@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Minus, Plus, ShoppingBag, Ticket, X, WalletCards } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Ticket, X } from "lucide-react";
 import { api, type ApiError } from "@/lib/api";
 import { cartSubtotalCents, useCartStore } from "@/store/cart-store";
 import { formatMoneyFromCents } from "@/lib/format";
@@ -26,17 +26,11 @@ type CartDrawerProps = {
   orderingRestaurantId: string;
   /** Value for `tableCode` on `POST /api/customer/order` (from table picker / QR segment). */
   orderingTableCode: string;
-  prepaidConfig?: {
-    upiId?: string | null;
-    upiName?: string | null;
-    upiQrUrl?: string | null;
-  };
 };
 
 export function CartDrawer({
   orderingRestaurantId,
   orderingTableCode,
-  prepaidConfig,
 }: CartDrawerProps) {
   const { lines, couponCode, setCouponCode, addItem, decItem, clear } = useCartStore();
   const idempotencyKeyRef = React.useRef<string | null>(null);
@@ -51,10 +45,6 @@ export function CartDrawer({
   const [customerName, setCustomerName] = React.useState("");
   const [customerPhone, setCustomerPhone] = React.useState("");
   const [customerEmail, setCustomerEmail] = React.useState("");
-  const [usePrepaid, setUsePrepaid] = React.useState(false);
-  const [prepaidTxnRef, setPrepaidTxnRef] = React.useState("");
-  const hasPrepaidDetails = Boolean(prepaidConfig?.upiQrUrl?.trim());
-
   const subtotal = cartSubtotalCents(lines);
 
   const validateCoupon = useMutation({
@@ -105,9 +95,6 @@ export function CartDrawer({
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         throw new Error("Enter a valid email address");
       }
-      if (usePrepaid && !prepaidTxnRef.trim()) {
-        throw new Error("Enter UPI transaction reference for prepaid");
-      }
       if (!idempotencyKeyRef.current) {
         idempotencyKeyRef.current = crypto.randomUUID();
       }
@@ -120,14 +107,6 @@ export function CartDrawer({
         customerPhone: phone || undefined,
         customerEmail: email || undefined,
         ...(!omitCustomerOrderMergeFlag ? { mergeIntoOpenSession: true } : {}),
-        prepaid: usePrepaid
-          ? {
-              method: "UPI_BANK",
-              status: "VERIFIED",
-              referenceId: prepaidTxnRef.trim(),
-              transactionId: prepaidTxnRef.trim(),
-            }
-          : undefined,
         lines: lines.map((l) => ({ itemId: l.itemId, qty: l.qty })),
       });
     },
@@ -140,8 +119,6 @@ export function CartDrawer({
       toast.success(msg);
       idempotencyKeyRef.current = null;
       setAppliedCoupon(null);
-      setUsePrepaid(false);
-      setPrepaidTxnRef("");
       clear();
     },
     onError: (e) => {
@@ -172,8 +149,8 @@ export function CartDrawer({
     <Sheet>
       <SheetTrigger
         className={cn(
-          "inline-flex h-11 w-full items-center justify-center gap-3 rounded-lg border border-transparent bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-[0_8px_24px_-8px_hsl(var(--primary)/0.55)] transition-all",
-          "hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+          "inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-primary/20 bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-[0_10px_28px_-10px_hsl(var(--primary)/0.55)] transition-all",
+          "hover:bg-primary/92 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2",
         )}
       >
         <ShoppingBag className="size-[18px]" />
@@ -318,43 +295,6 @@ export function CartDrawer({
                   autoComplete="email"
                 />
               </div>
-
-              {hasPrepaidDetails ? (
-                <div className="rounded-xl border border-black/[0.04] bg-muted/20 p-4 dark:border-white/[0.06]">
-                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <WalletCards className="size-4 text-primary" />
-                    Prepaid via UPI
-                  </div>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    UPI ID: <span className="font-medium text-foreground">{prepaidConfig?.upiId}</span>
-                    {prepaidConfig?.upiName ? ` (${prepaidConfig.upiName})` : ""}
-                  </p>
-                  {prepaidConfig?.upiQrUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={prepaidConfig.upiQrUrl}
-                      alt="UPI QR code"
-                      className="mt-2 h-32 w-32 rounded-md border border-border/60 object-cover"
-                    />
-                  ) : null}
-                  <div className="mt-3 flex gap-2">
-                    <Button
-                      type="button"
-                      variant={usePrepaid ? "default" : "secondary"}
-                      size="sm"
-                      onClick={() => setUsePrepaid((v) => !v)}
-                    >
-                      {usePrepaid ? "Prepaid selected" : "Use prepaid"}
-                    </Button>
-                    <Input
-                      value={prepaidTxnRef}
-                      onChange={(e) => setPrepaidTxnRef(e.target.value)}
-                      placeholder="UPI transaction ref"
-                      disabled={!usePrepaid}
-                    />
-                  </div>
-                </div>
-              ) : null}
 
               <div className="rounded-xl border border-black/[0.04] bg-card p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-white/[0.06]">
                 <div className="space-y-2 text-sm">

@@ -2,25 +2,41 @@
 
 import { format } from "date-fns";
 import type { Order } from "@/types/order";
+import { groupOrderItemsForKitchen } from "@/lib/kitchen-batches";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { toast } from "sonner";
 
 function buildKotHtml(order: Order): string {
+  const billOrderId = order.kitchenParentOrderId ?? order.id;
   const dateStr = format(new Date(order.createdAt), "dd/MM/yy HH:mm");
-  const itemsHtml = order.items
-    .map(
-      (it) =>
-        `<div class="kot-row"><span>${it.qty}× ${escapeHtml(it.name)}</span><span>${(it.qty * it.priceCents) / 100} ₹</span></div>`,
-    )
+  const batches = groupOrderItemsForKitchen(order);
+  const itemsHtml = batches
+    .map((batch) => {
+      const header =
+        batch.label !== ""
+          ? `<div class="kot-batch">${escapeHtml(batch.label)}</div>`
+          : "";
+      const rows = batch.items
+        .map(
+          (it) =>
+            `<div class="kot-row"><span>${it.qty}× ${escapeHtml(it.name)}</span><span>${(it.qty * it.priceCents) / 100} ₹</span></div>`,
+        )
+        .join("");
+      return header + rows;
+    })
     .join("");
   const notesHtml = order.notes
     ? `<div class="kot-row" style="margin-top:8px;font-style:italic">Note: ${escapeHtml(order.notes)}</div>`
     : "";
+  const batchHtml = order.kitchenTicketLabel
+    ? `<div class="kot-row" style="font-weight:700;margin-top:4px">${escapeHtml(order.kitchenTicketLabel)}</div>`
+    : "";
   return `
     <div class="kot">
       <div class="kot-header">KITCHEN ORDER TICKET</div>
-      <div class="kot-row"><span>Order #${order.id.slice(-8)}</span><span>Table ${order.tableNumber}</span></div>
+      <div class="kot-row"><span>Order #${billOrderId.slice(-8)}</span><span>Table ${order.tableNumber}</span></div>
+      ${batchHtml}
       <div class="kot-row"><span>${dateStr}</span></div>
       <div class="kot-items">${itemsHtml}</div>
       ${notesHtml}
@@ -45,16 +61,19 @@ export function KotPrint({ order }: { order: Order }) {
       return;
     }
     const content = buildKotHtml(order);
+    const billOrderId = order.kitchenParentOrderId ?? order.id;
     const html = `<!DOCTYPE html>
 <html>
 <head>
-  <title>KOT - Order ${order.id}</title>
+  <title>KOT - Order ${billOrderId.slice(-8)}</title>
   <style>
     body { font-family: system-ui, sans-serif; padding: 16px; margin: 0; }
     .kot { border: 2px solid #000; padding: 16px; max-width: 300px; }
     .kot-header { font-weight: bold; font-size: 18px; margin-bottom: 8px; }
     .kot-row { display: flex; justify-content: space-between; margin: 4px 0; }
     .kot-items { border-top: 1px dashed #000; margin-top: 8px; padding-top: 8px; }
+    .kot-batch { font-weight: 700; font-size: 12px; margin: 10px 0 4px; padding-top: 6px; border-top: 1px dashed #666; }
+    .kot-batch:first-child { border-top: none; padding-top: 0; margin-top: 0; }
   </style>
 </head>
 <body>${content}</body>

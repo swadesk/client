@@ -1,11 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { SplitSquareVertical, FileText, Plus, Trash2 } from "lucide-react";
+import { FileText } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Table } from "@/types/table";
 import type { PaymentMode } from "@/types/payment";
-import type { BillSplitMode, BillSplitPartInput } from "@/types/bill";
 import { formatMoneyFromCents } from "@/lib/format";
 import { api, type ApiError } from "@/lib/api";
 import { invalidateStaffTableQueries, qk, refetchStaffTableQueries } from "@/lib/query-keys";
@@ -15,16 +14,17 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BILLING_PAYMENT_MODES } from "@/components/features/billing/billing-payment-modes";
 import { Badge } from "@/components/ui/badge";
 import { isPrepaidEntity, isVerifiedPrepaid } from "@/lib/prepaid";
 import { sumBillLineTotalsCents } from "@/lib/bill-pricing";
+import { Separator } from "@/components/ui/separator";
 
 export function BillingDrawer({
   open,
@@ -44,10 +44,6 @@ export function BillingDrawer({
   const qc = useQueryClient();
   const [amount, setAmount] = React.useState("");
   const [mode, setMode] = React.useState<PaymentMode>("Cash");
-  const [splitMode, setSplitMode] = React.useState<BillSplitMode>("evenly");
-  const [customSplitParts, setCustomSplitParts] = React.useState<Array<{ id: string; amount: string }>>([
-    { id: crypto.randomUUID(), amount: "" },
-  ]);
 
   const billingQuery = useQuery({
     queryKey: qk.billingByTable(restaurantId, table?.id ?? ""),
@@ -85,51 +81,6 @@ export function BillingDrawer({
     },
   });
 
-  const splitMutation = useMutation({
-    mutationFn: () => {
-      if (!bill) throw new Error("Create bill first");
-      let parts: BillSplitPartInput[] | undefined = undefined;
-      if (splitMode === "custom") {
-        const parsed = customSplitParts
-          .map((part) => ({
-            amountCents: Math.round(Number(part.amount || "0") * 100),
-          }))
-          .filter((part) => Number.isFinite(part.amountCents) && part.amountCents > 0);
-        if (parsed.length === 0) {
-          throw new Error("Add at least one custom split amount.");
-        }
-        parts = parsed;
-      }
-      return api.billing.split({
-        restaurantId,
-        billId: bill.id,
-        mode: splitMode,
-        parts,
-      });
-    },
-    onSuccess: () => {
-      toast.success(`Bill split updated (${splitMode})`);
-      if (table?.id) {
-        void qc.invalidateQueries({ queryKey: qk.billingByTable(restaurantId, table.id) });
-      }
-      invalidateStaffTableQueries(qc, restaurantId);
-    },
-    onError: (err) => {
-      const apiErr = err as ApiError;
-      if (apiErr.message) {
-        toast.error(apiErr.message);
-        return;
-      }
-      if (apiErr.status === 403) {
-        toast.error(
-          apiErr.message ||
-            "Current plan limit hit for split configuration. Upgrade from Settings to continue.",
-        );
-        return;
-      }
-      toast.error(apiErr.message || "Failed to split bill");
-    },
-  });
   const createInvoiceMutation = useMutation({
     mutationFn: () => {
       if (!table?.id) throw new Error("Select a table first.");
@@ -221,8 +172,6 @@ export function BillingDrawer({
     if (!open) {
       setAmount("");
       setMode("Cash");
-      setSplitMode("evenly");
-      setCustomSplitParts([{ id: crypto.randomUUID(), amount: "" }]);
     }
   }, [open]);
 
@@ -230,81 +179,129 @@ export function BillingDrawer({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-lg flex flex-wrap items-center gap-2">
-            Collect payment — Table {table?.number ?? "—"}
+      <DialogContent
+        showCloseButton
+        className={cn(
+          "gap-0 overflow-hidden p-0 sm:max-w-md",
+          "max-h-[min(90vh,640px)] flex flex-col",
+        )}
+      >
+        <DialogHeader className="space-y-3 border-b border-border/60 bg-muted/20 px-6 py-5 text-left">
+          <div className="flex flex-wrap items-center gap-2">
+            <DialogTitle className="text-xl font-semibold tracking-tight">
+              Collect payment
+            </DialogTitle>
             {bill ? (
               <Badge
                 variant={bill.status === "PAID" ? "secondary" : "outline"}
-                className={
-                  bill.status === "PAID"
-                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200"
-                    : "font-normal"
-                }
+                className={cn(
+                  "font-normal",
+                  bill.status === "PAID" &&
+                    "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200",
+                )}
               >
-                Bill {bill.status}
+                {bill.status}
               </Badge>
             ) : null}
             {prepaid ? (
               <Badge
                 variant="secondary"
-                className={
+                className={cn(
                   prepaidVerified
                     ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                    : "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-                }
+                    : "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+                )}
               >
                 {prepaidVerified ? "Prepaid" : "Prepaid pending"}
               </Badge>
             ) : null}
-          </DialogTitle>
+          </div>
+          <DialogDescription className="text-sm font-medium text-foreground">
+            Table {table?.number ?? "—"}
+            {bill ? (
+              <span className="font-normal text-muted-foreground">
+                {" "}
+                · {formatMoneyFromCents(totalCents)} bill
+              </span>
+            ) : null}
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-6 space-y-6 overflow-y-auto pb-[max(2rem,env(safe-area-inset-bottom))]">
-          {!bill ? (
-            <section className="space-y-3 rounded-xl border border-border/60 bg-muted/10 p-5">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Start billing
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                No bill is linked to this table yet. Create one to load order lines and record
-                payments. If the kitchen is still preparing, you can open this again when the
-                table is ready to pay.
-              </p>
-              <Button
-                onClick={() => createBillMutation.mutate()}
-                disabled={createBillMutation.isPending || !table}
-                className="w-full"
-              >
-                {createBillMutation.isPending ? "Creating bill..." : "Create bill"}
-              </Button>
-            </section>
-          ) : null}
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+          <div className="space-y-5 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            {!bill ? (
+              <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  No bill is linked to this table yet. Create one to load order lines and record
+                  payments.
+                </p>
+                <Button
+                  className="mt-4 w-full"
+                  onClick={() => createBillMutation.mutate()}
+                  disabled={createBillMutation.isPending || !table}
+                >
+                  {createBillMutation.isPending ? "Creating bill…" : "Create bill"}
+                </Button>
+              </div>
+            ) : null}
 
-          {/* Bill summary */}
-          {bill ? (
-            <section className="space-y-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Bill summary
-              </h3>
-              <div className="rounded-xl border border-border/60 bg-muted/20 p-4 space-y-4">
-                {(bill.items ?? []).length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No bill items yet.</p>
-                ) : (
-                  bill.items.map((it) => (
-                    <div key={it.id}>
-                      <div className="flex justify-between text-sm">
-                        <span>
-                          {it.qty}x {it.name}
-                        </span>
-                        <span className="tabular-nums">{formatMoneyFromCents(it.totalCents)}</span>
+            {bill ? (
+              <div className="overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-b from-card to-muted/10 p-5 shadow-sm">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Balance due
+                </p>
+                <p
+                  className={cn(
+                    "mt-1 text-3xl font-semibold tabular-nums tracking-tight",
+                    remainingCents > 0 ? "text-foreground" : "text-emerald-600 dark:text-emerald-400",
+                  )}
+                >
+                  {formatMoneyFromCents(remainingCents)}
+                </p>
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+                <div className="mt-3 flex justify-between gap-4 text-xs text-muted-foreground">
+                  <span>
+                    Paid <span className="tabular-nums">{formatMoneyFromCents(paidCents)}</span>
+                  </span>
+                  <span>
+                    Total <span className="tabular-nums">{formatMoneyFromCents(totalCents)}</span>
+                  </span>
+                </div>
+              </div>
+            ) : null}
+
+            {bill ? (
+              <div>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Bill items
+                </h3>
+                <div className="max-h-40 space-y-0 overflow-y-auto rounded-xl border border-border/50 bg-muted/15">
+                  {(bill.items ?? []).length === 0 ? (
+                    <p className="p-4 text-sm text-muted-foreground">No bill items yet.</p>
+                  ) : (
+                    (bill.items ?? []).map((it, idx) => (
+                      <div key={it.id}>
+                        {idx > 0 ? <Separator className="bg-border/50" /> : null}
+                        <div className="flex justify-between gap-3 px-4 py-3 text-sm">
+                          <span className="min-w-0 leading-snug">
+                            <span className="tabular-nums text-muted-foreground">{it.qty}×</span>{" "}
+                            {it.name}
+                          </span>
+                          <span className="shrink-0 tabular-nums font-medium">
+                            {formatMoneyFromCents(it.totalCents)}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))
-                )}
+                    ))
+                  )}
+                </div>
                 {showBillLineVsTotal ? (
-                  <div className="space-y-1 border-t border-border/50 pt-3 text-xs text-muted-foreground">
+                  <div className="mt-3 space-y-1.5 text-xs text-muted-foreground">
                     <div className="flex justify-between">
                       <span>Items subtotal</span>
                       <span className="tabular-nums">{formatMoneyFromCents(billLinesSubtotalCents)}</span>
@@ -316,211 +313,17 @@ export function BillingDrawer({
                   </div>
                 ) : null}
               </div>
-            </section>
-          ) : null}
+            ) : null}
 
-          {/* Split bill */}
-          {bill ? (
-            <section className="space-y-4 rounded-xl border border-border/60 bg-muted/10 p-5">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Split options
-              </h3>
-              <Select value={splitMode} onValueChange={(v) => setSplitMode(v as BillSplitMode)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="evenly">Split evenly</SelectItem>
-                  <SelectItem value="by_item">Split by item</SelectItem>
-                  <SelectItem value="custom">Custom split</SelectItem>
-                </SelectContent>
-              </Select>
-              {splitMode === "custom" ? (
-                <div className="space-y-2">
-                  <Label>Custom split amounts (INR)</Label>
-                  <div className="space-y-2">
-                    {customSplitParts.map((part, idx) => (
-                      <div key={part.id} className="flex gap-2">
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={part.amount}
-                          onChange={(e) =>
-                            setCustomSplitParts((prev) =>
-                              prev.map((p) =>
-                                p.id === part.id ? { ...p, amount: e.target.value } : p,
-                              ),
-                            )
-                          }
-                          placeholder={`Part ${idx + 1} amount`}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() =>
-                            setCustomSplitParts((prev) =>
-                              prev.length <= 1 ? prev : prev.filter((p) => p.id !== part.id),
-                            )
-                          }
-                          disabled={customSplitParts.length <= 1}
-                          aria-label={`Remove part ${idx + 1}`}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() =>
-                        setCustomSplitParts((prev) => [
-                          ...prev,
-                          { id: crypto.randomUUID(), amount: "" },
-                        ])
-                      }
-                    >
-                      <Plus className="mr-2 size-4" />
-                      Add split part
-                    </Button>
-                  </div>
-                </div>
-              ) : null}
-              <Button
-                variant="secondary"
-                className="w-full"
-                disabled={splitMutation.isPending}
-                onClick={() => splitMutation.mutate()}
-              >
-                <SplitSquareVertical className="mr-2 size-4" />
-                {splitMutation.isPending ? "Updating split..." : "Apply split"}
-              </Button>
-            </section>
-          ) : null}
-
-          {/* Invoice */}
-          {bill ? (
-            <section className="space-y-3 rounded-xl border border-border/60 bg-muted/10 p-5">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Invoice
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => createInvoiceMutation.mutate()}
-                  disabled={createInvoiceMutation.isPending}
-                >
-                  <FileText className="mr-2 size-4" />
-                  {createInvoiceMutation.isPending ? "Creating..." : "Create / refresh invoice"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  disabled={!existingInvoiceId || !onInvoiceOpen}
-                  onClick={() => {
-                    if (existingInvoiceId && onInvoiceOpen) onInvoiceOpen(existingInvoiceId);
-                  }}
-                >
-                  <FileText className="mr-2 size-4" />
-                  View invoice
-                </Button>
-              </div>
-            </section>
-          ) : null}
-
-          {/* Totals and progress */}
-          {bill ? (
-            <section className="space-y-3">
-              <div className="flex justify-between text-lg font-semibold">
-                <span>Total due</span>
-                <span className="tabular-nums">{formatMoneyFromCents(totalCents)}</span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-emerald-500 transition-all duration-300"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Paid</span>
-                <span className="tabular-nums">{formatMoneyFromCents(paidCents)}</span>
-              </div>
-              <div className="flex justify-between font-semibold">
-                <span>Remaining</span>
-                <span
-                  className={cn(
-                    "tabular-nums",
-                    remainingCents > 0 && "text-amber-600 dark:text-amber-400",
-                  )}
-                >
-                  {formatMoneyFromCents(remainingCents)}
-                </span>
-              </div>
-            </section>
-          ) : null}
-
-          {/* Payments recorded */}
-          {payments.length > 0 && (
-            <section className="space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Payments recorded
-              </h3>
-              <div className="space-y-2">
-                {payments.map((p) => (
-                  <div
-                    key={p.id}
-                    className="flex justify-between items-center rounded-lg border border-border/60 bg-muted/30 px-4 py-3 text-sm"
-                  >
-                    <span className="font-medium">{p.mode}</span>
-                    <span className="tabular-nums font-semibold">{formatMoneyFromCents(p.amountCents)}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Add payment */}
-          {bill ? (
-            <section className="space-y-4 rounded-xl border border-border/60 bg-muted/10 p-5">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Add payment
-              </h3>
-              <div className="space-y-3">
-                <Label htmlFor="payment-amount" className="text-sm font-medium">
-                  Amount (₹)
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="payment-amount"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
-                    inputMode="decimal"
-                    className="flex-1"
-                    disabled={payMutation.isPending}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handlePayFull}
-                    disabled={remainingCents <= 0 || payMutation.isPending}
-                  >
-                    Pay full
-                  </Button>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <Label id="payment-mode-label" className="text-sm font-medium">
-                  Payment mode
-                </Label>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {bill ? (
+              <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Record payment
+                </h3>
+                <p className="mt-1 text-xs text-muted-foreground" id="payment-mode-label">
+                  Choose how the guest paid, enter the amount, then add it to the bill.
+                </p>
+                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {BILLING_PAYMENT_MODES.map((pm) => (
                     <button
                       key={pm.value}
@@ -528,11 +331,11 @@ export function BillingDrawer({
                       onClick={() => setMode(pm.value)}
                       disabled={payMutation.isPending}
                       className={cn(
-                        "flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-4 transition-all touch-manipulation",
-                        "hover:border-primary/50 hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50",
+                        "flex flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 transition-all touch-manipulation",
+                        "hover:border-primary/40 hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50",
                         mode === pm.value
-                          ? "border-primary bg-primary/10"
-                          : "border-border/60 bg-muted/20",
+                          ? "border-primary bg-primary/10 shadow-[0_0_0_1px_hsl(var(--primary)/0.2)]"
+                          : "border-border/60 bg-muted/10",
                       )}
                     >
                       <pm.icon
@@ -542,48 +345,135 @@ export function BillingDrawer({
                         )}
                       />
                       <span
-                        className={cn("text-xs font-medium", mode === pm.value && "text-primary")}
+                        className={cn(
+                          "text-[11px] font-medium leading-tight",
+                          mode === pm.value && "text-primary",
+                        )}
                       >
                         {pm.label}
                       </span>
                     </button>
                   ))}
                 </div>
+                <div className="mt-4 space-y-2">
+                  <Label htmlFor="payment-amount" className="text-sm">
+                    Amount
+                  </Label>
+                  <div className="flex gap-2">
+                    <div className="relative min-w-0 flex-1">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                        ₹
+                      </span>
+                      <Input
+                        id="payment-amount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="0.00"
+                        inputMode="decimal"
+                        className="pl-8"
+                        disabled={payMutation.isPending}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="shrink-0"
+                      onClick={handlePayFull}
+                      disabled={remainingCents <= 0 || payMutation.isPending}
+                    >
+                      Full balance
+                    </Button>
+                  </div>
+                </div>
+                <Button
+                  className="mt-4 w-full"
+                  onClick={handleAddPayment}
+                  disabled={!amount || parseFloat(amount || "0") <= 0 || payMutation.isPending}
+                >
+                  {payMutation.isPending ? "Saving…" : "Add payment"}
+                </Button>
               </div>
-              <Button
-                variant="secondary"
-                className="w-full"
-                onClick={handleAddPayment}
-                disabled={!amount || parseFloat(amount || "0") <= 0 || payMutation.isPending}
-              >
-                {payMutation.isPending ? "Saving payment..." : "Add payment"}
-              </Button>
-            </section>
-          ) : null}
+            ) : null}
 
-          {/* Complete CTA */}
-          {bill ? (
-            <Button
-              className={cn(
-                "w-full py-6 text-base font-semibold transition-all",
-                remainingCents > 0
-                  ? "opacity-80"
-                  : "bg-emerald-600 text-white shadow-lg hover:bg-emerald-700",
-              )}
-              size="lg"
-              onClick={handlePayRemaining}
-              disabled={remainingCents <= 0 || payMutation.isPending}
-            >
-              {remainingCents > 0
-                ? `Collect remaining ${formatMoneyFromCents(remainingCents)}`
-                : "Payment complete"}
-            </Button>
-          ) : null}
-          {billingQuery.isError ? (
-            <p className="text-sm text-destructive">
-              {(billingQuery.error as ApiError)?.message ?? "Failed to load billing state."}
-            </p>
-          ) : null}
+            {bill ? (
+              <Button
+                className={cn(
+                  "w-full py-6 text-base font-semibold shadow-md transition-all",
+                  remainingCents > 0
+                    ? "bg-primary"
+                    : "bg-emerald-600 text-white hover:bg-emerald-700",
+                )}
+                size="lg"
+                onClick={handlePayRemaining}
+                disabled={remainingCents <= 0 || payMutation.isPending}
+              >
+                {remainingCents > 0
+                  ? `Collect remaining ${formatMoneyFromCents(remainingCents)}`
+                  : "Fully paid"}
+              </Button>
+            ) : null}
+
+            {bill ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Invoice
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => createInvoiceMutation.mutate()}
+                    disabled={createInvoiceMutation.isPending}
+                  >
+                    <FileText className="mr-2 size-4" />
+                    {createInvoiceMutation.isPending ? "Working…" : "Create / refresh"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={!existingInvoiceId || !onInvoiceOpen}
+                    onClick={() => {
+                      if (existingInvoiceId && onInvoiceOpen) onInvoiceOpen(existingInvoiceId);
+                    }}
+                  >
+                    View
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+
+            {payments.length > 0 ? (
+              <div>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Payments on this bill
+                </h3>
+                <ul className="space-y-2">
+                  {payments.map((p) => (
+                    <li
+                      key={p.id}
+                      className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/10 px-4 py-3 text-sm"
+                    >
+                      <span className="font-medium">{p.mode}</span>
+                      <span className="tabular-nums font-semibold">
+                        {formatMoneyFromCents(p.amountCents)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {billingQuery.isError ? (
+              <p className="text-sm text-destructive">
+                {(billingQuery.error as ApiError)?.message ?? "Failed to load billing state."}
+              </p>
+            ) : null}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
