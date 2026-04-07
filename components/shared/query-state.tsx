@@ -95,21 +95,24 @@ export function KitchenBoardSkeleton() {
   );
 }
 
-export function QrMenuSkeleton({ rows = 6 }: { rows?: number }) {
+export function QrMenuSkeleton({ cells = 8 }: { cells?: number }) {
   return (
-    <div className="space-y-3">
-      {Array.from({ length: rows }).map((_, idx) => (
+    <div className="grid grid-cols-2 gap-3 sm:gap-4">
+      {Array.from({ length: cells }).map((_, idx) => (
         <div
           key={idx}
-          className="flex gap-3 rounded-2xl border border-black/[0.04] bg-card p-3 dark:border-white/[0.06]"
+          className="relative isolate w-full overflow-hidden rounded-2xl border border-black/[0.04] bg-muted/80 dark:border-white/[0.06]"
         >
-          <Skeleton className="size-[4.75rem] shrink-0 rounded-xl" />
-          <div className="min-w-0 flex-1 space-y-2 pt-0.5">
-            <Skeleton className="h-4 w-2/3" />
-            <Skeleton className="h-3.5 w-20" />
-            <Skeleton className="h-3 w-full max-w-[220px]" />
+          <div className="relative w-full pb-[125%]">
+            <Skeleton className="absolute inset-0 rounded-none" />
+            <Skeleton className="absolute right-2 top-2 z-30 size-9 rounded-full border border-white/15 bg-black/40 backdrop-blur-md" />
+            <div className="absolute inset-x-0 bottom-0 flex w-full flex-col justify-end">
+              <div className="rounded-t-md rounded-b-2xl border-t border-white/10 bg-black/40 px-2.5 py-1.5 backdrop-blur-md">
+                <Skeleton className="h-2.5 w-[90%] bg-white/25" />
+                <Skeleton className="mt-1 h-2.5 w-12 bg-white/30" />
+              </div>
+            </div>
           </div>
-          <Skeleton className="size-10 shrink-0 rounded-lg" />
         </div>
       ))}
     </div>

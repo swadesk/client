@@ -13,6 +13,11 @@ export type RestaurantMenuResponse = {
   name: string;
   /** Present when the backend includes venue branding on the public menu payload. */
   logoUrl?: string;
+  /**
+   * Optional `#rrggbb` brand accent for the guest QR menu (wins over logo-derived color).
+   * If omitted, the client may sample `logoUrl` when CORS allows.
+   */
+  brandPrimary?: string | null;
   categories: MenuCategory[];
   items: MenuItem[];
 };
@@ -74,6 +79,12 @@ export type WaiterUpdateOrderRequest = {
   status: Exclude<OrderStatus, "Completed">;
 };
 export type WaiterUpdateOrderResponse = ApiOk;
+
+/** GET /api/waiter/me?restaurantId= — optional; links the session to a floor waiter profile id. */
+export type WaiterMeResponse = {
+  waiterId?: string;
+  id?: string;
+};
 
 export type CustomerPlaceOrderRequest = {
   restaurantId: string;

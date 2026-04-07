@@ -4,6 +4,8 @@ export const qk = {
   adminMenu: (restaurantId: string) => ["admin.menu", restaurantId] as const,
   adminTables: (restaurantId: string) => ["admin.tables", restaurantId] as const,
   waiterTables: (restaurantId: string) => ["waiter.tables", restaurantId] as const,
+  waiterMe: (restaurantId: string, userId: string) =>
+    ["waiter.me", restaurantId, userId] as const,
   adminWaiters: (restaurantId: string) => ["admin.waiters", restaurantId] as const,
   adminInventory: (restaurantId: string) => ["admin.inventory", restaurantId] as const,
   kitchenOrders: (restaurantId: string) => ["kitchen.orders", restaurantId] as const,

@@ -371,6 +371,14 @@ export const api = {
         `/api/restaurants/${restaurantId}/members`,
         { method: "POST", body: JSON.stringify(payload) },
       ),
+    /**
+     * Removes venue membership + frees the email for this restaurant when the backend implements it.
+     * Recommended: alternatively cascade-remove membership inside `DELETE /api/admin/waiters/:id`.
+     */
+    deleteMember: (restaurantId: string, userId: string) =>
+      apiFetch<void>(`/api/restaurants/${restaurantId}/members/${userId}`, {
+        method: "DELETE",
+      }),
   },
   /** Guest QR page: Next.js route may proxy to backend (see app/api/qr/menu). */
   qrMenu: (restaurantId: string) =>
@@ -497,6 +505,12 @@ export const api = {
       ),
   },
   waiter: {
+    /** Optional: resolves floor waiter profile id for table assignment (`Table.waiterId`). */
+    me: (restaurantId: string) =>
+      apiFetch<import("@/types/api").WaiterMeResponse>(
+        withRestaurantId("/api/waiter/me", restaurantId),
+        { method: "GET" },
+      ),
     /** Floor staff table list (avoids 403 on GET /api/admin/tables for Waiter). */
     tables: (restaurantId: string) =>
       apiFetch<import("@/types/api").AdminTablesGetResponse>(
