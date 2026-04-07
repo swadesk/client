@@ -1,12 +1,16 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, MoreVertical, Package, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/query-keys";
 import { useRestaurantStore } from "@/store/restaurant-store";
+import { useAuthStore } from "@/store/auth-store";
+import { canAccessRouteForUser } from "@/components/layout/nav-items";
+import { getPostAuthRedirectPath } from "@/lib/auth-routing";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { QueryState } from "@/components/shared/query-state";
@@ -160,8 +164,15 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
 }
 
 export default function InventoryPage() {
+  const router = useRouter();
   const restaurantId = useRestaurantStore((s) => s.activeRestaurantId);
+  const user = useAuthStore((s) => s.user);
+  const canViewInventory = canAccessRouteForUser(user, "/inventory");
   const qc = useQueryClient();
+
+  React.useEffect(() => {
+    if (user && !canViewInventory) router.replace(getPostAuthRedirectPath(user));
+  }, [user, canViewInventory, router]);
   const [open, setOpen] = React.useState(false);
   const [editItem, setEditItem] = React.useState<InventoryItem | null>(null);
   const [editQty, setEditQty] = React.useState("");
@@ -174,7 +185,7 @@ export default function InventoryPage() {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: qk.adminInventory(restaurantId ?? ""),
     queryFn: () => api.admin.inventory(restaurantId!),
-    enabled: !!restaurantId,
+    enabled: !!restaurantId && !!user && canViewInventory,
   });
 
   const items = data ?? [];
@@ -280,6 +291,15 @@ export default function InventoryPage() {
       quantity: qty,
       minQuantity: minQty,
     });
+  }
+
+  if (user && !canViewInventory) {
+    return (
+      <EmptyState
+        title="Inventory"
+        description="You are being redirected to your allowed workspace."
+      />
+    );
   }
 
   if (!restaurantId) {

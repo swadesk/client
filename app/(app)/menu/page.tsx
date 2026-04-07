@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { MenuItem } from "@/types/menu";
+import type { MenuCategory, MenuItem } from "@/types/menu";
 import { api, type ApiError } from "@/lib/api";
 import { qk } from "@/lib/query-keys";
 import { useRestaurantStore } from "@/store/restaurant-store";
@@ -31,6 +32,10 @@ import {
 } from "@/components/shared/query-state";
 import { EmptyState } from "@/components/shared/empty-state";
 import { normalizeAdminMenuPayload } from "@/lib/menu-normalize";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { canAccessRouteForUser } from "@/components/layout/nav-items";
+import { getPostAuthRedirectPath } from "@/lib/auth-routing";
 
 const defaultForm = (): MenuItemFormState => ({
   categoryId: "",
@@ -43,16 +48,22 @@ const defaultForm = (): MenuItemFormState => ({
 });
 
 export default function MenuPage() {
+  const router = useRouter();
   const restaurantId = useRestaurantStore((s) => s.activeRestaurantId);
   const user = useAuthStore((s) => s.user);
   const qc = useQueryClient();
+  const canViewMenu = canAccessRouteForUser(user, "/menu");
   const canUploadImage =
     user?.globalRole === "SuperAdmin" || user?.role === "Admin" || user?.role === "Manager";
+
+  React.useEffect(() => {
+    if (user && !canViewMenu) router.replace(getPostAuthRedirectPath(user));
+  }, [user, canViewMenu, router]);
 
   const { data, isLoading, isError, refetch, error } = useQuery({
     queryKey: qk.adminMenu(restaurantId ?? ""),
     queryFn: () => api.admin.menu(restaurantId!),
-    enabled: !!restaurantId,
+    enabled: !!restaurantId && !!user && canViewMenu,
   });
 
   const { categories, items } = React.useMemo(
@@ -75,6 +86,9 @@ export default function MenuPage() {
   const [editing, setEditing] = React.useState<MenuItem | null>(null);
   const [form, setForm] = React.useState<MenuItemFormState>(defaultForm);
   const [itemToDelete, setItemToDelete] = React.useState<MenuItem | null>(null);
+  const [categoryToRename, setCategoryToRename] = React.useState<MenuCategory | null>(null);
+  const [renameCategoryDraft, setRenameCategoryDraft] = React.useState("");
+  const [categoryToDelete, setCategoryToDelete] = React.useState<MenuCategory | null>(null);
   const editingRef = React.useRef<MenuItem | null>(null);
   React.useEffect(() => {
     editingRef.current = editing;
@@ -164,6 +178,38 @@ export default function MenuPage() {
     onError: () => toast.error("Failed to update availability"),
   });
 
+  const updateCategoryMutation = useMutation({
+    mutationFn: (payload: { categoryId: string; name: string }) =>
+      api.admin.updateCategory({
+        restaurantId: restaurantId!,
+        categoryId: payload.categoryId,
+        name: payload.name,
+      }),
+    onSuccess: () => {
+      if (restaurantId) void qc.invalidateQueries({ queryKey: qk.adminMenu(restaurantId) });
+      setCategoryToRename(null);
+      toast.success("Category updated");
+    },
+    onError: (err) =>
+      toast.error((err as ApiError)?.message ?? "Failed to rename category"),
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: (categoryId: string) => api.admin.deleteCategory(restaurantId!, categoryId),
+    onSuccess: (_, deletedId) => {
+      toast.success("Category deleted");
+      setCategoryToDelete(null);
+      const rid = restaurantId;
+      if (rid) {
+        void qc.invalidateQueries({ queryKey: qk.adminMenu(rid) });
+        void qc.invalidateQueries({ queryKey: qk.qrMenu(rid) });
+      }
+      setActiveCategoryId((prev) => (prev === deletedId ? "" : prev));
+    },
+    onError: (err) =>
+      toast.error((err as ApiError)?.message ?? "Failed to delete category"),
+  });
+
   const deleteMenuItemMutation = useMutation({
     mutationFn: (itemId: string) => api.admin.deleteMenuItem(restaurantId!, itemId),
     onSuccess: (_, deletedId) => {
@@ -193,6 +239,25 @@ export default function MenuPage() {
   }
 
   const filtered = items.filter((i) => i.categoryId === activeCategoryId);
+
+  const categoryBusyId =
+    (updateCategoryMutation.isPending && updateCategoryMutation.variables?.categoryId) ||
+    (deleteCategoryMutation.isPending && deleteCategoryMutation.variables) ||
+    null;
+
+  function openRenameCategory(cat: MenuCategory) {
+    setCategoryToRename(cat);
+    setRenameCategoryDraft(cat.name);
+  }
+
+  if (user && !canViewMenu) {
+    return (
+      <EmptyState
+        title="Menu"
+        description="You are being redirected to your allowed workspace."
+      />
+    );
+  }
 
   if (!restaurantId) {
     return (
@@ -243,6 +308,9 @@ export default function MenuPage() {
               createCategoryMutation.mutate(name.trim())
             }
             isCreatingCategory={createCategoryMutation.isPending}
+            onRenameCategory={openRenameCategory}
+            onDeleteCategory={(c) => setCategoryToDelete(c)}
+            categoryBusyId={categoryBusyId}
           />
         </div>
 
@@ -297,6 +365,10 @@ export default function MenuPage() {
                     onToggleAvailability={(id, nextAvail) =>
                       availabilityMutation.mutate({ id, available: nextAvail })
                     }
+                    availabilityPending={
+                      availabilityMutation.isPending &&
+                      availabilityMutation.variables?.id === item.id
+                    }
                   />
                 ))}
               </div>
@@ -320,6 +392,105 @@ export default function MenuPage() {
         onSave={upsert}
         canUploadImage={canUploadImage}
       />
+
+      <Dialog
+        open={!!categoryToRename}
+        onOpenChange={(next) => {
+          if (!next) setCategoryToRename(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rename category</DialogTitle>
+            <DialogDescription>
+              Update the name shown in your admin menu and guest QR menu.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-1">
+            <Label htmlFor="rename-category">Name</Label>
+            <Input
+              id="rename-category"
+              value={renameCategoryDraft}
+              onChange={(e) => setRenameCategoryDraft(e.target.value)}
+              disabled={updateCategoryMutation.isPending}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter") return;
+                e.preventDefault();
+                const name = renameCategoryDraft.trim();
+                if (name && categoryToRename) {
+                  updateCategoryMutation.mutate({
+                    categoryId: categoryToRename.id,
+                    name,
+                  });
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCategoryToRename(null)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={
+                !renameCategoryDraft.trim() ||
+                updateCategoryMutation.isPending ||
+                (categoryToRename !== null &&
+                  renameCategoryDraft.trim() === categoryToRename.name)
+              }
+              onClick={() => {
+                if (!categoryToRename) return;
+                const name = renameCategoryDraft.trim();
+                if (!name) return;
+                updateCategoryMutation.mutate({
+                  categoryId: categoryToRename.id,
+                  name,
+                });
+              }}
+            >
+              {updateCategoryMutation.isPending ? "Saving…" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!categoryToDelete}
+        onOpenChange={(next) => {
+          if (!next) setCategoryToDelete(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete category?</DialogTitle>
+            <DialogDescription>
+              {categoryToDelete ? (
+                <>
+                  <span className="font-medium text-foreground">
+                    “{categoryToDelete.name}”
+                  </span>{" "}
+                  will be removed. If it still has menu items, your API may reject this—move or delete
+                  items first.
+                </>
+              ) : null}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCategoryToDelete(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleteCategoryMutation.isPending}
+              onClick={() => {
+                if (!categoryToDelete) return;
+                deleteCategoryMutation.mutate(categoryToDelete.id);
+              }}
+            >
+              {deleteCategoryMutation.isPending ? "Deleting…" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={!!itemToDelete}

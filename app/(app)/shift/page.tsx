@@ -22,7 +22,8 @@ export default function ShiftPage() {
   const accessToken = useAuthStore((s) => s.accessToken);
   const canView = canAccessRouteForUser(user, "/shift");
   const floorStaff =
-    user?.globalRole !== "SuperAdmin" && (user?.role === "Waiter" || user?.role === "Manager");
+    user?.globalRole !== "SuperAdmin" &&
+    (user?.role === "Waiter" || user?.role === "Manager" || user?.role === "Kitchen");
   const userId = user?.id ?? "";
   const shiftSlice = useStaffShiftStore((s) => s.byUserId[userId]);
   const clockIn = useStaffShiftStore((s) => s.clockIn);
@@ -73,11 +74,11 @@ export default function ShiftPage() {
       <div className="space-y-12">
         <PageHeader
           title="Shift"
-          description="Attendance for floor staff (waiters and managers)."
+          description="Attendance for floor and kitchen staff (waiters, managers, kitchen)."
         />
         <EmptyState
           title="Not available for your role"
-          description="Shift tracking is for waiters and managers. Use Orders or Dashboard for your workspace."
+          description="Shift tracking is for waiters, managers, and kitchen staff. Use your workspace home for other roles."
           primaryAction={{ label: "Go back", onClick: () => router.push(getPostAuthRedirectPath(user)) }}
         />
       </div>

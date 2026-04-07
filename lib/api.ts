@@ -545,6 +545,25 @@ export const api = {
           }),
         },
       ),
+    updateCategory: (payload: import("@/types/api").AdminUpdateCategoryRequest) =>
+      apiFetch<import("@/types/menu").MenuCategory>(
+        withRestaurantId(
+          `/api/admin/menu/categories/${payload.categoryId}`,
+          payload.restaurantId,
+        ),
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            restaurantId: payload.restaurantId,
+            name: payload.name,
+          }),
+        },
+      ),
+    deleteCategory: (restaurantId: string, categoryId: string) =>
+      apiFetch<void>(
+        withRestaurantId(`/api/admin/menu/categories/${categoryId}`, restaurantId),
+        { method: "DELETE" },
+      ),
     createMenuItem: (
       payload: import("@/types/api").AdminCreateItemRequest & { image?: File | null },
     ) => {
@@ -570,17 +589,28 @@ export const api = {
         import("@/types/api").AdminUpdateItemRequest & { image?: File | null }
       >,
     ) => {
-      const fd = new FormData();
-      if (payload.name !== undefined) fd.append("name", payload.name);
-      if (payload.description !== undefined) fd.append("description", payload.description ?? "");
-      if (payload.priceCents !== undefined) fd.append("priceCents", String(payload.priceCents));
-      if (payload.available !== undefined) fd.append("available", String(payload.available));
-      if (payload.categoryId !== undefined) fd.append("categoryId", payload.categoryId);
-      if (payload.image) fd.append("image", payload.image);
-      return apiFetch<import("@/types/menu").MenuItem>(
-        withRestaurantId(`/api/admin/menu/items/${itemId}`, restaurantId),
-        { method: "PATCH", body: fd },
-      );
+      const url = withRestaurantId(`/api/admin/menu/items/${itemId}`, restaurantId);
+      if (payload.image) {
+        const fd = new FormData();
+        if (payload.name !== undefined) fd.append("name", payload.name);
+        if (payload.description !== undefined) fd.append("description", payload.description ?? "");
+        if (payload.priceCents !== undefined) fd.append("priceCents", String(payload.priceCents));
+        if (payload.available !== undefined) fd.append("available", String(payload.available));
+        if (payload.categoryId !== undefined) fd.append("categoryId", payload.categoryId);
+        fd.append("image", payload.image);
+        return apiFetch<import("@/types/menu").MenuItem>(url, { method: "PATCH", body: fd });
+      }
+      const body: Record<string, unknown> = {};
+      if (payload.name !== undefined) body.name = payload.name;
+      if (payload.description !== undefined) body.description = payload.description;
+      if (payload.priceCents !== undefined) body.priceCents = payload.priceCents;
+      if (payload.available !== undefined) body.available = payload.available;
+      if (payload.categoryId !== undefined) body.categoryId = payload.categoryId;
+      return apiFetch<import("@/types/menu").MenuItem>(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
     },
     deleteMenuItem: (restaurantId: string, itemId: string) =>
       apiFetch<void>(

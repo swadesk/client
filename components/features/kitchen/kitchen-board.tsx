@@ -19,11 +19,17 @@ import {
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import { CSS } from "@dnd-kit/utilities";
 import { useDroppable, useDraggable } from "@dnd-kit/core";
-import type { Order } from "@/types/order";
+import type { KitchenBoardUnit } from "@/types/order";
 import { OrderCard } from "@/components/features/orders/order-card";
 import { KotPrint } from "@/components/features/kitchen/kot-print";
 import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
+import { kitchenUnitToDisplayOrder } from "@/lib/kitchen-board-units";
+import {
+  isAllowedKitchenTransition,
+  kitchenFlowValidationMessage,
+} from "@/lib/kitchen-status-flow";
+import { toast } from "sonner";
 
 type KanbanStatus = "Pending" | "Preparing" | "Ready";
 
@@ -72,15 +78,22 @@ const toneStyles: Record<
   },
 };
 
-function DraggableOrderCard({
-  order,
+function draggableUnitId(unit: KitchenBoardUnit) {
+  return `unit-${unit.boardId}`;
+}
+
+function DraggableKitchenUnit({
+  unit,
   isDragging,
   onDelete,
+  onUnitStatusChange,
 }: {
-  order: Order;
+  unit: KitchenBoardUnit;
   isDragging?: boolean;
   onDelete?: (orderId: string) => void;
+  onUnitStatusChange?: (unit: KitchenBoardUnit, status: KanbanStatus) => void;
 }) {
+  const displayOrder = React.useMemo(() => kitchenUnitToDisplayOrder(unit), [unit]);
   const {
     attributes,
     listeners,
@@ -88,8 +101,8 @@ function DraggableOrderCard({
     transform,
     isDragging: isDraggingFromHook,
   } = useDraggable({
-    id: `order-${order.id}`,
-    data: { order },
+    id: draggableUnitId(unit),
+    data: { unit },
   });
 
   const style = transform
@@ -98,6 +111,8 @@ function DraggableOrderCard({
       }
     : undefined;
 
+  const dragging = isDragging ?? isDraggingFromHook;
+
   return (
     <div
       ref={setNodeRef}
@@ -105,11 +120,26 @@ function DraggableOrderCard({
       {...listeners}
       {...attributes}
       className={cn(
-        "cursor-grab active:cursor-grabbing transition-all duration-200",
-        (isDragging ?? isDraggingFromHook) && "opacity-0 pointer-events-none",
+        "cursor-grab transition-all duration-200 active:cursor-grabbing",
+        dragging && "pointer-events-none opacity-0",
       )}
     >
-      <OrderCard order={order} variant="kds" onDelete={onDelete} />
+      <OrderCard
+        order={displayOrder}
+        variant="kds"
+        onDelete={onDelete}
+        onKitchenStatusSet={
+          onUnitStatusChange
+            ? (s) => {
+                if (!isAllowedKitchenTransition(unit.status, s)) {
+                  toast.error(kitchenFlowValidationMessage());
+                  return;
+                }
+                onUnitStatusChange(unit, s);
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }
@@ -117,19 +147,21 @@ function DraggableOrderCard({
 function KitchenColumn({
   id,
   title,
-  orders,
+  units,
   emptyTitle,
   tone,
   isDragging,
   onOrderDelete,
+  onUnitStatusChange,
 }: {
   id: KanbanStatus;
   title: string;
-  orders: Order[];
+  units: KitchenBoardUnit[];
   emptyTitle: string;
   tone: Tone;
   isDragging: boolean;
   onOrderDelete?: (orderId: string) => void;
+  onUnitStatusChange?: (unit: KitchenBoardUnit, status: KanbanStatus) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id });
   const t = toneStyles[tone];
@@ -140,7 +172,7 @@ function KitchenColumn({
         "flex min-h-[300px] flex-col overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all duration-200 dark:border-white/[0.06] dark:bg-white/[0.03]",
         t.ring,
         "ring-1",
-        isOver && "ring-2 ring-primary/40 bg-primary/5 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.1)]",
+        isOver && "bg-primary/5 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.1)] ring-2 ring-primary/40",
       )}
     >
       <div
@@ -152,31 +184,33 @@ function KitchenColumn({
       >
         <div className={cn("text-base font-semibold tracking-tight", t.title)}>{title}</div>
         <span className="rounded-full bg-black/5 px-2.5 py-0.5 text-xs font-medium tabular-nums text-muted-foreground dark:bg-white/10">
-          {orders.length}
+          {units.length}
         </span>
       </div>
       <div
         ref={setNodeRef}
         className={cn(
           "flex min-h-[200px] flex-1 flex-col gap-4 p-5",
-          isOver && orders.length === 0 && "rounded-lg border-2 border-dashed border-primary/30",
+          isOver && units.length === 0 && "rounded-lg border-2 border-dashed border-primary/30",
         )}
       >
-        {orders.length === 0 ? (
+        {units.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center py-8">
             {isDragging && isOver ? (
-              <p className="text-center text-sm font-medium text-primary">
-                Drop orders here
-              </p>
+              <p className="text-center text-sm font-medium text-primary">Drop tickets here</p>
             ) : (
               <EmptyState title={emptyTitle} />
             )}
           </div>
         ) : (
-          orders.map((o) => (
-            <div key={o.id} className="space-y-2">
-              <DraggableOrderCard order={o} onDelete={onOrderDelete} />
-              <KotPrint order={o} />
+          units.map((unit) => (
+            <div key={unit.boardId} className="space-y-2">
+              <DraggableKitchenUnit
+                unit={unit}
+                onDelete={onOrderDelete}
+                onUnitStatusChange={onUnitStatusChange}
+              />
+              <KotPrint order={kitchenUnitToDisplayOrder(unit)} />
             </div>
           ))
         )}
@@ -186,14 +220,14 @@ function KitchenColumn({
 }
 
 export function KitchenBoard({
-  orders,
+  units,
   restaurantId,
-  onOrderStatusChange,
+  onUnitStatusChange,
   onOrderDelete,
 }: {
-  orders: Order[];
+  units: KitchenBoardUnit[];
   restaurantId?: string;
-  onOrderStatusChange?: (orderId: string, status: KanbanStatus) => void;
+  onUnitStatusChange?: (unit: KitchenBoardUnit, status: KanbanStatus) => void;
   onOrderDelete?: (orderId: string) => void;
 }) {
   const [activeId, setActiveId] = React.useState<string | null>(null);
@@ -206,8 +240,8 @@ export function KitchenBoard({
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 120,
-        tolerance: 8,
+        delay: 280,
+        tolerance: 14,
       },
     }),
     useSensor(PointerSensor, {
@@ -225,21 +259,20 @@ export function KitchenBoard({
     const { active, over } = event;
     setActiveId(null);
 
-    if (!over || !onOrderStatusChange || !restaurantId) return;
+    if (!over || !onUnitStatusChange || !restaurantId) return;
 
-    const dragged = active.data.current?.order as Order | undefined;
-    const orderId = dragged?.id;
-    if (!orderId) return;
+    const dragged = active.data.current?.unit as KitchenBoardUnit | undefined;
+    if (!dragged) return;
 
     let newStatus: KanbanStatus;
     const overId = String(over.id);
     if (COLUMN_IDS.has(overId)) {
       newStatus = overId as KanbanStatus;
-    } else if (overId.startsWith("order-")) {
-      const targetId = overId.slice("order-".length);
-      const targetOrder = orders.find((o) => o.id === targetId);
-      if (!targetOrder) return;
-      newStatus = targetOrder.status as KanbanStatus;
+    } else if (overId.startsWith("unit-")) {
+      const targetBoardId = overId.slice("unit-".length);
+      const targetUnit = units.find((u) => u.boardId === targetBoardId);
+      if (!targetUnit) return;
+      newStatus = targetUnit.status as KanbanStatus;
     } else {
       return;
     }
@@ -247,20 +280,25 @@ export function KitchenBoard({
     const currentStatus = dragged.status as KanbanStatus;
     if (currentStatus === newStatus) return;
 
-    onOrderStatusChange(orderId, newStatus);
+    if (!isAllowedKitchenTransition(currentStatus, newStatus)) {
+      toast.error(kitchenFlowValidationMessage());
+      return;
+    }
+
+    onUnitStatusChange(dragged, newStatus);
   };
 
   const handleDragCancel = () => {
     setActiveId(null);
   };
 
-  const pending = orders.filter((o) => o.status === "Pending");
-  const preparing = orders.filter((o) => o.status === "Preparing");
-  const ready = orders.filter((o) => o.status === "Ready");
+  const pending = units.filter((u) => u.status === "Pending");
+  const preparing = units.filter((u) => u.status === "Preparing");
+  const ready = units.filter((u) => u.status === "Ready");
   const isDragging = activeId !== null;
 
-  const activeOrder = activeId
-    ? orders.find((o) => `order-${o.id}` === activeId)
+  const activeUnit = activeId
+    ? units.find((u) => draggableUnitId(u) === activeId)
     : null;
 
   return (
@@ -280,17 +318,14 @@ export function KitchenBoard({
             <KitchenColumn
               id={col.id}
               title={col.title}
-              orders={
-                col.id === "Pending"
-                  ? pending
-                  : col.id === "Preparing"
-                    ? preparing
-                    : ready
+              units={
+                col.id === "Pending" ? pending : col.id === "Preparing" ? preparing : ready
               }
               emptyTitle={col.emptyTitle}
               tone={col.tone}
               isDragging={isDragging}
               onOrderDelete={onOrderDelete}
+              onUnitStatusChange={onUnitStatusChange}
             />
           </div>
         ))}
@@ -301,9 +336,9 @@ export function KitchenBoard({
         modifiers={[snapCenterToCursor]}
         zIndex={9999}
       >
-        {activeOrder ? (
+        {activeUnit ? (
           <div className="scale-105 cursor-grabbing shadow-[0_8px_24px_-4px_rgba(0,0,0,0.15)]">
-            <OrderCard order={activeOrder} variant="kds" />
+            <OrderCard order={kitchenUnitToDisplayOrder(activeUnit)} variant="kds" />
           </div>
         ) : null}
       </DragOverlay>

@@ -77,6 +77,11 @@ export type WaiterUpdateOrderRequest = {
   restaurantId: string;
   orderId: string;
   status: Exclude<OrderStatus, "Completed">;
+  /**
+   * When the order exposes `kitchenBatches`, send the batch being updated.
+   * Omit for legacy single-status orders (whole `orderId` moves together).
+   */
+  kitchenBatchId?: string;
 };
 export type WaiterUpdateOrderResponse = ApiOk;
 
@@ -143,6 +148,7 @@ export type Restaurant = import("@/types/restaurant").Restaurant;
 
 /** Menu CRUD */
 export type AdminCreateCategoryRequest = { restaurantId: string; name: string };
+export type AdminUpdateCategoryRequest = { restaurantId: string; categoryId: string; name: string };
 /** Text fields for POST /admin/menu/items (multipart). Optional file field `image` is appended by the client. */
 export type AdminCreateItemRequest = {
   restaurantId: string;

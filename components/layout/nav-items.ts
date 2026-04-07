@@ -37,12 +37,14 @@ export const memberNavByRole: Record<StaffRoleApi, ReadonlyArray<(typeof navItem
   Manager: ["/dashboard", "/orders", "/shift", "/tables", "/billing", "/kitchen"],
   /** Billing is manager/admin; waiters use Tables for payment + Orders for the queue. */
   Waiter: ["/orders", "/shift", "/tables"],
-  Kitchen: ["/kitchen"],
+  /** KDS plus shift/break, menu & stock (API must allow KITCHEN on admin menu/inventory routes). */
+  Kitchen: ["/kitchen", "/shift", "/menu", "/inventory"],
 };
 
 /** Sidebar order for roles that should not follow the global `navItems` sequence. */
 const NAV_ORDER_BY_ROLE: Partial<Record<StaffRoleApi, readonly string[]>> = {
   Waiter: ["/orders", "/shift", "/tables"],
+  Kitchen: ["/kitchen", "/shift", "/menu", "/inventory"],
 };
 
 export function getNavItemsForUser(user: AuthUser | null) {

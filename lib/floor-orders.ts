@@ -1,6 +1,7 @@
 import { api, type ApiError } from "@/lib/api";
 import type { Order } from "@/types/order";
 import { isOrderCompletedStatus } from "@/lib/order-status";
+import { normalizeOrderRecord } from "@/lib/order-shape";
 
 export type FetchFloorOrdersOptions = {
   /**
@@ -12,31 +13,41 @@ export type FetchFloorOrdersOptions = {
 };
 
 /**
- * Some backends wrap lists as `{ orders: [...] }`, `{ data: [...] }`, or nest under `payload`.
+ * Unwraps common API list envelopes; returns raw elements (before per-order coercion).
  */
-export function normalizeOrdersResponse(raw: unknown): Order[] {
-  if (Array.isArray(raw)) return raw as Order[];
+function extractOrdersArray(raw: unknown): unknown[] {
+  if (Array.isArray(raw)) return raw;
   if (raw && typeof raw === "object") {
     const o = raw as Record<string, unknown>;
     for (const key of ["orders", "data", "results", "items"] as const) {
       const v = o[key];
-      if (Array.isArray(v)) return v as Order[];
+      if (Array.isArray(v)) return v;
       if (v && typeof v === "object" && !Array.isArray(v)) {
         const inner = v as Record<string, unknown>;
         for (const ik of ["orders", "data", "items", "results"] as const) {
           const a = inner[ik];
-          if (Array.isArray(a)) return a as Order[];
+          if (Array.isArray(a)) return a;
         }
       }
     }
     const payload = o.payload;
     if (payload && typeof payload === "object") {
       const p = payload as Record<string, unknown>;
-      if (Array.isArray(p.orders)) return p.orders as Order[];
-      if (Array.isArray(p.data)) return p.data as Order[];
+      if (Array.isArray(p.orders)) return p.orders;
+      if (Array.isArray(p.data)) return p.data;
     }
   }
   return [];
+}
+
+/**
+ * Some backends wrap lists as `{ orders: [...] }`, `{ data: [...] }`, or nest under `payload`.
+ * Each element is coerced through {@link normalizeOrderRecord} (line-level `addedAt` / batch ids).
+ */
+export function normalizeOrdersResponse(raw: unknown): Order[] {
+  return extractOrdersArray(raw)
+    .map((el) => normalizeOrderRecord(el))
+    .filter((o): o is Order => o != null);
 }
 
 function sortByCreatedAt(orders: Order[]): Order[] {

@@ -37,6 +37,8 @@ import {
 import { cn } from "@/lib/utils";
 import { canAccessRouteForUser } from "@/components/layout/nav-items";
 import { getPostAuthRedirectPath } from "@/lib/auth-routing";
+import { resolveStaffAvatarUrl } from "@/lib/staff-photo-url";
+import { normalizeWaiterFromApi } from "@/lib/waiter-normalize";
 import type { AdminUpdateWaiterStatusRequest } from "@/types/api";
 import type { RestaurantMemberRow, StaffRoleApi, StaffRoleBody } from "@/types/auth";
 import type { Waiter, WaiterRole, WaiterStatus } from "@/types/waiter";
@@ -190,6 +192,7 @@ function getStatusColors(status: WaiterStatus) {
 
 function WaiterCard({
   waiter,
+  memberPhotoUrl,
   tableIdToNumber,
   appRole,
   onStatusChange,
@@ -198,6 +201,8 @@ function WaiterCard({
   isUpdating,
 }: {
   waiter: Waiter;
+  /** Venue member profile photo when the floor row has no `photoUrl`. */
+  memberPhotoUrl?: string | null;
   tableIdToNumber: Map<string, number>;
   appRole?: string | null;
   onStatusChange: (waiterId: string, status: WaiterStatus) => void;
@@ -205,6 +210,7 @@ function WaiterCard({
   deleteButtonLabel: string;
   isUpdating: boolean;
 }) {
+  const avatarSrc = resolveStaffAvatarUrl(waiter.photoUrl ?? memberPhotoUrl);
   const normalizedAppRole = (appRole ?? "Waiter").toLowerCase();
   const canHaveTables = normalizedAppRole === "waiter";
   const tableLabels =
@@ -244,8 +250,8 @@ function WaiterCard({
             waiter.status === "Offline" && "ring-slate-300/30 dark:ring-slate-500/30",
           )}
         >
-          {waiter.photoUrl ? (
-            <AvatarImage src={waiter.photoUrl} alt="" className="object-cover" />
+          {avatarSrc ? (
+            <AvatarImage src={avatarSrc} alt="" className="object-cover" />
           ) : null}
           <AvatarFallback
             className={cn(
@@ -404,7 +410,10 @@ export default function WaitersPage() {
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: qk.adminWaiters(restaurantId ?? ""),
-    queryFn: () => api.admin.waiters(restaurantId!),
+    queryFn: async () => {
+      const rows = await api.admin.waiters(restaurantId!);
+      return rows.map((w) => normalizeWaiterFromApi(w));
+    },
     enabled: !!restaurantId,
   });
 
@@ -737,6 +746,13 @@ export default function WaitersPage() {
               <WaiterCard
                 key={waiter.id}
                 waiter={waiter}
+                memberPhotoUrl={
+                  findLinkedMemberForWaiter(
+                    waiter,
+                    membersData ?? [],
+                    appRoleByWaiterId.get(waiter.id) ?? "Waiter",
+                  )?.photoUrl ?? null
+                }
                 tableIdToNumber={tableIdToNumber}
                 appRole={appRoleByWaiterId.get(waiter.id) ?? null}
                 onStatusChange={handleStatusChange}
