@@ -8,7 +8,7 @@ import { ArrowRight, LayoutGrid } from "lucide-react";
 import { api } from "@/lib/api";
 import { normalizeTablesResponse } from "@/lib/tables-normalize";
 import { qk } from "@/lib/query-keys";
-import { useRestaurantStore } from "@/store/restaurant-store";
+import { useActiveRestaurant, useRestaurantStore } from "@/store/restaurant-store";
 import { useRealtimeOrders } from "@/lib/realtime";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -89,6 +89,8 @@ function SummaryCard({
 export default function FloorMapPage() {
   const router = useRouter();
   const restaurantId = useRestaurantStore((s) => s.activeRestaurantId);
+  const activeRestaurant = useActiveRestaurant();
+  const hasRoomSections = Boolean(activeRestaurant?.roomSections?.trim());
   useRealtimeOrders(restaurantId);
   const [filter, setFilter] = React.useState<FloorFilter>("All");
 
@@ -135,6 +137,20 @@ export default function FloorMapPage() {
         <EmptyState
           title="Select a restaurant"
           description="Choose a restaurant in the header to view its floor plan."
+        />
+      </div>
+    );
+  }
+  if (!hasRoomSections) {
+    return (
+      <div className="space-y-12">
+        <PageHeader
+          title="Floor map"
+          description="Visual layout of tables and seating on your floor."
+        />
+        <EmptyState
+          title="Room setup required"
+          description="Room / dining sections were not provided during onboarding, so floor and QR operations are hidden for this venue."
         />
       </div>
     );

@@ -2,12 +2,12 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Restaurant as ApiRestaurant } from "@/types/restaurant";
 
-export type Restaurant = Pick<ApiRestaurant, "id" | "name" | "logoUrl">;
+export type Restaurant = Pick<ApiRestaurant, "id" | "name" | "logoUrl" | "roomSections">;
 
 type RestaurantState = {
   restaurants: Restaurant[];
   activeRestaurantId: string | null;
-  setRestaurants: (restaurants: Pick<Restaurant, "id" | "name" | "logoUrl">[]) => void;
+  setRestaurants: (restaurants: Pick<Restaurant, "id" | "name" | "logoUrl" | "roomSections">[]) => void;
   setActiveRestaurantId: (id: string) => void;
 };
 

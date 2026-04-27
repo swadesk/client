@@ -126,6 +126,7 @@ export default function PermissionsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Venue</TableHead>
+                <TableHead className="min-w-[200px] max-w-[280px]">Room sections</TableHead>
                 <TableHead>GSTIN</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="w-[220px] text-right">Actions</TableHead>
@@ -139,6 +140,18 @@ export default function PermissionsPage() {
                     {r.address ? (
                       <div className="mt-0.5 text-xs font-normal text-muted-foreground">{r.address}</div>
                     ) : null}
+                  </TableCell>
+                  <TableCell className="max-w-[280px]">
+                    {r.roomSections?.trim() ? (
+                      <p
+                        className="line-clamp-3 text-xs leading-relaxed text-muted-foreground"
+                        title={r.roomSections}
+                      >
+                        {r.roomSections}
+                      </p>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell className="font-mono text-xs">{r.gstin ?? "—"}</TableCell>
                   <TableCell>

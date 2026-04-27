@@ -45,10 +45,13 @@ import { isOrderCompletedStatus } from "@/lib/order-status";
 import { canAccessRouteForUser } from "@/components/layout/nav-items";
 import { normalizeTablesResponse } from "@/lib/tables-normalize";
 import { resolveFloorWaiterProfileId } from "@/lib/floor-waiter-profile";
+import { useActiveRestaurant } from "@/store/restaurant-store";
 
 export default function TablesPage() {
   const router = useRouter();
   const restaurantId = useRestaurantStore((s) => s.activeRestaurantId);
+  const activeRestaurant = useActiveRestaurant();
+  const hasRoomSections = Boolean(activeRestaurant?.roomSections?.trim());
   const user = useAuthStore((s) => s.user);
   const canViewTables = canAccessRouteForUser(user, "/tables");
   const canManageTablesLayout = user?.role === "Admin" || user?.role === "Manager";
@@ -298,6 +301,20 @@ export default function TablesPage() {
         title="Tables"
         description="You are being redirected to your allowed workspace."
       />
+    );
+  }
+  if (restaurantId && !hasRoomSections) {
+    return (
+      <div className="space-y-12">
+        <PageHeader
+          title="Tables"
+          description="Seating, billing, and payments from the floor."
+        />
+        <EmptyState
+          title="Room setup required"
+          description="Room / dining sections were not provided during onboarding, so table and QR setup is hidden for this venue."
+        />
+      </div>
     );
   }
 

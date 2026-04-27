@@ -47,6 +47,7 @@ export default function OnboardingPage() {
       if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
     };
   }, [logoPreviewUrl]);
+  const [roomSections, setRoomSections] = React.useState("");
   const [description, setDescription] = React.useState("");
 
   const [joinRestaurantId, setJoinRestaurantId] = React.useState("");
@@ -59,6 +60,10 @@ export default function OnboardingPage() {
       toast.error("Enter a display name for your venue");
       return;
     }
+    if (!roomSections.trim()) {
+      toast.error("Describe your room or dining sections for super-admin review");
+      return;
+    }
     setBusy(true);
     try {
       const { token, user } = await api.auth.bootstrapRestaurant({
@@ -67,6 +72,7 @@ export default function OnboardingPage() {
         address: address.trim() || undefined,
         gstin: gstin.trim() || undefined,
         phone: phone.trim() || undefined,
+        roomSections: roomSections.trim(),
         description: description.trim() || undefined,
         logo: logoFile,
       });
@@ -148,6 +154,7 @@ export default function OnboardingPage() {
                 <div className="mt-8 space-y-3 text-sm text-white/70">
                   <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">Fast onboarding review</div>
                   <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">Supports GSTIN, logo upload, and legal details</div>
+                  <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">Room / dining sections captured for floor setup</div>
                   <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">Role-based access once approved</div>
                 </div>
               </div>
@@ -245,6 +252,23 @@ export default function OnboardingPage() {
                       ) : null}
                     </div>
                     <p className="text-xs text-white/50">JPEG, PNG, WebP, or GIF. Sent as multipart field <code className="rounded bg-white/10 px-1">logo</code>.</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="rooms" className="text-white/90">
+                      Room / dining sections <span className="text-orange-300">*</span>
+                    </Label>
+                    <Textarea
+                      id="rooms"
+                      rows={3}
+                      required
+                      className="resize-none rounded-xl border-white/15 bg-white/10 text-white placeholder:text-white/45 focus-visible:ring-orange-400/30"
+                      placeholder="e.g. Main hall — 12 tables, Patio — 6 tables, Private room — 1"
+                      value={roomSections}
+                      onChange={(e) => setRoomSections(e.target.value)}
+                    />
+                    <p className="text-xs text-white/50">
+                      Super-admin reviews this with your application before the venue is activated. It appears on your dashboard after approval.
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="desc" className="text-white/85">

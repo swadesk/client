@@ -36,6 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         id: r.id,
         name: r.name,
         logoUrl: r.logoUrl,
+        roomSections: r.roomSections,
       })),
     );
   }, [restaurants, setRestaurants]);

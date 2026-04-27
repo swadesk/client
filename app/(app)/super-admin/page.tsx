@@ -287,6 +287,16 @@ export default function SuperAdminPage() {
                   {openRestaurantId === r.id ? (
                     <TableRow>
                       <TableCell colSpan={5} className="bg-muted/20 p-3">
+                        {r.roomSections?.trim() ? (
+                          <div className="mb-4 rounded-xl border bg-background px-4 py-3 text-sm">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              Room sections (onboarding)
+                            </div>
+                            <p className="mt-2 whitespace-pre-wrap text-foreground/90">{r.roomSections}</p>
+                          </div>
+                        ) : (
+                          <p className="mb-4 text-sm text-muted-foreground">No room sections recorded for this venue.</p>
+                        )}
                         <RestaurantStaffSection restaurantId={r.id} />
                       </TableCell>
                     </TableRow>

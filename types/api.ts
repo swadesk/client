@@ -1,6 +1,7 @@
 import type { MenuCategory, MenuItem } from "@/types/menu";
 import type { InventoryItem } from "@/types/inventory";
 import type { Order, OrderStatus } from "@/types/order";
+import type { Room } from "@/types/room";
 import type { Table, TableStatus } from "@/types/table";
 import type { Waiter, WaiterRole, WaiterStatus } from "@/types/waiter";
 import type { Invoice } from "@/types/invoice";
@@ -25,6 +26,8 @@ export type AdminMenuGetResponse = RestaurantMenuResponse;
 
 export type AdminTablesGetResponse = Table[];
 
+export type AdminRoomsGetResponse = Room[];
+
 export type AdminCreateTableRequest = {
   restaurantId: string;
   number: number;
@@ -33,12 +36,25 @@ export type AdminCreateTableRequest = {
 };
 export type AdminCreateTableResponse = Table;
 
+export type AdminCreateRoomRequest = {
+  restaurantId: string;
+  name: string;
+};
+export type AdminCreateRoomResponse = Room;
+
 export type AdminAssignTableRequest = {
   restaurantId: string;
   tableId: string;
   waiterId: string | null;
 };
 export type AdminAssignTableResponse = Table;
+
+export type AdminAssignRoomRequest = {
+  restaurantId: string;
+  roomId: string;
+  waiterId: string | null;
+};
+export type AdminAssignRoomResponse = Room;
 
 export type AdminWaitersGetResponse = Waiter[];
 

@@ -2,6 +2,7 @@ import type { AuthUser, StaffRoleApi } from "@/types/auth";
 
 export type NavIconKey =
   | "dashboard"
+  | "rooms"
   | "tables"
   | "floorMap"
   | "menu"
@@ -16,6 +17,7 @@ export type NavIconKey =
 
 export const navItems = [
   { href: "/dashboard", label: "Dashboard", iconKey: "dashboard" },
+  { href: "/rooms", label: "Rooms", iconKey: "rooms" },
   { href: "/tables", label: "Tables", iconKey: "tables" },
   { href: "/floor-map", label: "Floor map", iconKey: "floorMap" },
   { href: "/menu", label: "Menu", iconKey: "menu" },
@@ -34,7 +36,7 @@ export const superAdminNavHrefs = ["/dashboard", "/super-admin", "/permissions"]
 export const memberNavByRole: Record<StaffRoleApi, ReadonlyArray<(typeof navItems)[number]["href"]>> = {
   /** Venue admin: floor shift UI is for waiters/managers only — omit `/shift` from nav. */
   Admin: navItems.map((item) => item.href).filter((href) => href !== "/shift"),
-  Manager: ["/dashboard", "/orders", "/shift", "/tables", "/billing", "/kitchen"],
+  Manager: ["/dashboard", "/orders", "/shift", "/rooms", "/tables", "/billing", "/kitchen"],
   /** Billing is manager/admin; waiters use Tables for payment + Orders for the queue. */
   Waiter: ["/orders", "/shift", "/tables"],
   /** KDS plus shift/break, menu & stock (API must allow KITCHEN on admin menu/inventory routes). */

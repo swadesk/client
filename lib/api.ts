@@ -271,6 +271,7 @@ export const api = {
       if (payload.address) fd.append("address", payload.address);
       if (payload.gstin) fd.append("gstin", payload.gstin);
       if (payload.phone) fd.append("phone", payload.phone);
+      if (payload.roomSections) fd.append("roomSections", payload.roomSections);
       if (payload.description) fd.append("description", payload.description);
       if (payload.logo) fd.append("logo", payload.logo);
       return apiFetch<import("@/types/api").AuthLoginResponse>("/api/auth/bootstrap-restaurant", {
@@ -622,6 +623,11 @@ export const api = {
         withRestaurantId("/api/admin/tables", restaurantId),
         { method: "GET" },
       ),
+    rooms: (restaurantId: string) =>
+      apiFetch<import("@/types/api").AdminRoomsGetResponse>(
+        withRestaurantId("/api/admin/rooms", restaurantId),
+        { method: "GET" },
+      ),
     /** GET /api/admin/waiters?restaurantId=… */
     waiters: (restaurantId: string) =>
       apiFetch<import("@/types/api").AdminWaitersGetResponse>(
@@ -638,8 +644,18 @@ export const api = {
         method: "POST",
         body: JSON.stringify(payload),
       }),
+    createRoom: (payload: import("@/types/api").AdminCreateRoomRequest) =>
+      apiFetch<import("@/types/api").AdminCreateRoomResponse>("/api/admin/rooms", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
     assignTableToWaiter: (payload: import("@/types/api").AdminAssignTableRequest) =>
       apiFetch<import("@/types/api").AdminAssignTableResponse>("/api/admin/tables", {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }),
+    assignRoomToWaiter: (payload: import("@/types/api").AdminAssignRoomRequest) =>
+      apiFetch<import("@/types/api").AdminAssignRoomResponse>("/api/admin/rooms", {
         method: "PATCH",
         body: JSON.stringify(payload),
       }),
@@ -658,6 +674,11 @@ export const api = {
     deleteTable: (restaurantId: string, tableId: string) =>
       apiFetch<import("@/types/api").ApiOk>(
         withRestaurantId(`/api/admin/tables/${tableId}`, restaurantId),
+        { method: "DELETE" },
+      ),
+    deleteRoom: (restaurantId: string, roomId: string) =>
+      apiFetch<import("@/types/api").ApiOk>(
+        withRestaurantId(`/api/admin/rooms/${roomId}`, restaurantId),
         { method: "DELETE" },
       ),
     deleteWaiter: (restaurantId: string, waiterId: string) =>

@@ -63,6 +63,8 @@ export type BootstrapRestaurantRequest = {
   address?: string;
   gstin?: string;
   phone?: string;
+  /** Dining / room zones (e.g. main hall, patio). Shown to super-admin at approval and on the venue dashboard. */
+  roomSections?: string;
   description?: string;
 };
 

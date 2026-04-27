@@ -24,6 +24,7 @@ import {
   MenuIconGlyph,
   OrdersIcon,
   QrIcon,
+  RoomsIcon,
   SettingsIcon,
   ShiftIcon,
   ShieldIcon,
@@ -39,6 +40,7 @@ const superAdminNavItems = [
 
 const memberNavIcons: Record<NavIconKey, ComponentType<{ className?: string }>> = {
   dashboard: DashboardIcon,
+  rooms: RoomsIcon,
   tables: TablesIcon,
   floorMap: FloorMapIcon,
   menu: MenuBookIcon,
@@ -57,11 +59,16 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const user = useAuthStore((s) => s.user);
   const restaurantId = useRestaurantStore((s) => s.activeRestaurantId);
   const activeRestaurant = useActiveRestaurant();
+  const hasRoomSections = Boolean(activeRestaurant?.roomSections?.trim());
   const qrMenuHref = restaurantId
     ? `/qr-menu/${restaurantId}/table_01?pickTable=1`
     : "/login";
   const showSuperAdmin = isSuperAdmin(user);
-  const memberNavItems = getNavItemsForUser(user);
+  const memberNavItems = getNavItemsForUser(user).filter((item) => {
+    // If onboarding didn't capture room sections, hide table/floor QR operations in the client portal.
+    if (!hasRoomSections && (item.href === "/rooms" || item.href === "/tables" || item.href === "/floor-map")) return false;
+    return true;
+  });
   const memberNavItemsWithIcons = memberNavItems.map((item) => ({
     ...item,
     icon: memberNavIcons[item.iconKey],
@@ -118,10 +125,10 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           <Link
             href={qrMenuHref}
             onClick={handleNav}
-            aria-disabled={!restaurantId}
+            aria-disabled={!restaurantId || !hasRoomSections}
             className={cn(
               "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
-              restaurantId
+              restaurantId && hasRoomSections
                 ? "text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 : "pointer-events-none text-sidebar-foreground/35",
             )}

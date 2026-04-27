@@ -88,7 +88,14 @@ export default function ProfilePage() {
     },
     onSuccess: (updated) => {
       const next = restaurants.map((r) =>
-        r.id === updated.id ? { id: r.id, name: r.name, logoUrl: updated.logoUrl ?? undefined } : r,
+        r.id === updated.id
+          ? {
+              id: r.id,
+              name: r.name,
+              logoUrl: updated.logoUrl ?? undefined,
+              roomSections: r.roomSections,
+            }
+          : r,
       );
       setRestaurants(next);
       setRestaurantLogoFile(null);

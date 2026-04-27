@@ -154,6 +154,13 @@ export default function DashboardPage() {
     refetchInterval: 30_000,
   });
 
+  const restaurantProfileQuery = useQuery({
+    queryKey: ["restaurant-profile", restaurantId],
+    queryFn: () => api.restaurants.get(restaurantId!),
+    enabled: !!restaurantId,
+    staleTime: 60_000,
+  });
+
   const dayOrdersQuery = useQuery({
     queryKey: ["dashboard.orders.day", restaurantId, selectedDate],
     queryFn: () =>
@@ -398,6 +405,30 @@ export default function DashboardPage() {
             trend={{ value: "SLA", positive: false }}
             href="/kitchen"
           />
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-white/[0.06] dark:bg-white/[0.03]">
+          <div className="px-6 pt-6 pb-4">
+            <SectionHeader
+              title="Room sections"
+              description="Dining areas from your onboarding request, available after super-admin approval."
+            />
+          </div>
+          <div className="px-6 pb-6">
+            {restaurantProfileQuery.isLoading ? (
+              <div className="h-16 animate-pulse rounded-xl bg-muted/60" />
+            ) : restaurantProfileQuery.isError ? (
+              <p className="text-sm text-muted-foreground">Could not load venue profile.</p>
+            ) : restaurantProfileQuery.data?.roomSections?.trim() ? (
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
+                {restaurantProfileQuery.data.roomSections}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No room sections on file yet. They appear here once saved from onboarding and your venue is active.
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

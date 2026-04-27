@@ -27,6 +27,12 @@ type QrTableOption = {
 
 function formatTableLabelFromId(id: string): string {
   const t = id.trim();
+  const roomPrefixed = /^room_(.+)$/i.exec(t);
+  if (roomPrefixed) {
+    const suffix = roomPrefixed[1] ?? "";
+    if (/^[0-9a-f-]{36}$/i.test(suffix)) return `Room (${suffix.slice(0, 8)}…)`;
+    return `Room ${suffix}`;
+  }
   if (t.toLowerCase() === "takeaway" || t.toLowerCase() === "non-table") {
     return "Takeaway / Non-table";
   }

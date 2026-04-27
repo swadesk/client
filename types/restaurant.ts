@@ -10,6 +10,8 @@ export type Restaurant = {
   gstin?: string;
   phone?: string;
   logoUrl?: string;
+  /** Requested at onboarding; visible after super-admin approves the venue. */
+  roomSections?: string | null;
   description?: string;
   approvalStatus: RestaurantApprovalStatus;
 };
