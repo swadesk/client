@@ -246,8 +246,9 @@ export default function DashboardPage() {
   const topItemsChartData = topItemsQuery.data?.data ?? [];
   const topItem = topItemsChartData[0] ?? null;
   const ordersByHourData = React.useMemo(() => {
+    const list = dayOrdersQuery.data ?? [];
     const buckets = Array.from({ length: 24 }, (_, hour) => ({ hour: `${as2(hour)}:00`, orders: 0 }));
-    for (const order of dayOrders) {
+    for (const order of list) {
       const createdAtMs = Date.parse(order.createdAt);
       if (Number.isNaN(createdAtMs)) continue;
       const istDate = new Date(createdAtMs + IST_OFFSET_MS);
@@ -255,7 +256,7 @@ export default function DashboardPage() {
       buckets[hour].orders += 1;
     }
     return buckets;
-  }, [dayOrders]);
+  }, [dayOrdersQuery.data]);
   const peakHour = React.useMemo(
     () => ordersByHourData.reduce((best, slot) => (slot.orders > best.orders ? slot : best), ordersByHourData[0]),
     [ordersByHourData],

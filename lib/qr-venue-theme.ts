@@ -44,7 +44,10 @@ function relativeLuminance255(r: number, g: number, b: number): number {
 }
 
 function themeFromRgb(r: number, g: number, b: number): QrVenueThemeCssVars {
-  let { h, s, l } = rgbToHsl(r, g, b);
+  const hsl = rgbToHsl(r, g, b);
+  const h = hsl.h;
+  let s = hsl.s;
+  let l = hsl.l;
   if (s < 18) s = Math.min(88, s + 40);
   else s = Math.min(92, s + 10);
   l = Math.min(54, Math.max(40, l > 72 ? l - 14 : l < 32 ? l + 8 : l));

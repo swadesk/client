@@ -2,23 +2,23 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 import { cn } from "@/lib/utils";
 
+function subscribe() {
+  return () => undefined;
+}
+
 export function ThemeToggle({ className }: { className?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(subscribe, () => true, () => false);
   const isDark = resolvedTheme === "dark";
   const toggleLabel = mounted
     ? isDark
       ? "Switch to light theme"
       : "Switch to dark theme"
     : "Toggle theme";
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   return (
     <button

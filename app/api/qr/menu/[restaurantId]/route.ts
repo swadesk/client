@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 function getOrigin(): string | undefined {
   const raw = process.env.NEXT_PUBLIC_API_ORIGIN ?? process.env.API_ORIGIN;
   if (!raw?.trim()) return undefined;
-  return raw.trim().replace(/\/$/, "");
+  let t = raw.trim().replace(/\/$/, "");
+  if (!/^https?:\/\//i.test(t)) t = `https://${t}`;
+  return t;
 }
 
 /**
