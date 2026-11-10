@@ -5,7 +5,11 @@
 export function getApiOrigin(): string | undefined {
   const raw = process.env.NEXT_PUBLIC_API_ORIGIN;
   if (typeof raw !== "string") return undefined;
-  const t = raw.trim();
+  let t = raw.trim().replace(/\/$/, "");
   if (!t) return undefined;
-  return t.replace(/\/$/, "");
+  // Netlify UI often stores host-only values; treat as https so fetch is not same-origin relative.
+  if (!/^https?:\/\//i.test(t)) {
+    t = `https://${t}`;
+  }
+  return t;
 }
