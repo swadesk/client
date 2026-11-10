@@ -418,9 +418,9 @@ export default function WaitersPage() {
   });
 
   const { data: tablesData } = useQuery({
-    queryKey: qk.adminTables(restaurantId ?? ""),
+    queryKey: qk.adminTables(restaurantId ?? "", "ROOM"),
     queryFn: async () => {
-      const raw = await api.admin.tables(restaurantId!);
+      const raw = await api.admin.tables(restaurantId!, "ROOM");
       return normalizeTablesResponse(raw);
     },
     enabled: !!restaurantId,
@@ -780,7 +780,7 @@ export default function WaitersPage() {
               </div>
             </div>
             <Link
-              href="/tables"
+              href="/rooms"
               className="mt-6 flex items-center justify-between rounded-xl bg-muted/30 p-4 text-sm font-medium text-primary transition-colors hover:bg-muted/50"
             >
               Manage table assignments

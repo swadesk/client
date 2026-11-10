@@ -2,6 +2,7 @@
 
 import type { Table, TableStatus } from "@/types/table";
 import { normalizeTableStatus } from "@/lib/table-status";
+import { floorUnitDisplayName, floorUnitNoun, floorUnitTitle } from "@/lib/floor-units";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -60,6 +61,12 @@ export function TableCard({
   isCreateInvoicePending?: boolean;
 }) {
   const statusForUi = displayStatus ?? normalizeTableStatus(table.status);
+  const kind = table.kind === "ROOM" ? "ROOM" : "TABLE";
+  const unitTitle = floorUnitDisplayName(table);
+  const capacityLabel =
+    kind === "ROOM"
+      ? `${table.seats} guest${table.seats === 1 ? "" : "s"}`
+      : `${table.seats} seats`;
 
   return (
     <Card
@@ -71,8 +78,12 @@ export function TableCard({
     >
       <CardHeader className="flex-row items-start justify-between gap-3">
         <div>
-          <CardTitle className="text-base">Table {table.number}</CardTitle>
-          <div className="text-xs text-muted-foreground">{table.seats} seats</div>
+          <CardTitle className="text-base">{unitTitle}</CardTitle>
+          <div className="text-xs text-muted-foreground">
+            {kind === "ROOM" && table.label?.trim()
+              ? `${floorUnitTitle("ROOM")} ${table.number} · ${capacityLabel}`
+              : capacityLabel}
+          </div>
         </div>
         <Badge variant={statusVariant(statusForUi)}>{statusForUi}</Badge>
       </CardHeader>
@@ -166,7 +177,7 @@ export function TableCard({
             }}
           >
             <QrCode className="mr-2 size-4" />
-            Table QR
+            {floorUnitTitle(kind)} QR
           </Button>
         ) : null}
         {onRequestDelete ? (
@@ -181,7 +192,7 @@ export function TableCard({
             }}
           >
             <Trash2 className="mr-2 size-4" />
-            Delete table
+            Delete {floorUnitNoun(kind)}
           </Button>
         ) : null}
       </CardContent>

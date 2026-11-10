@@ -5,6 +5,7 @@ import { Copy, Download, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import type { Table } from "@/types/table";
 import { buildQrMenuUrl } from "@/lib/qr-menu-url";
+import { floorUnitDisplayName, floorUnitNoun, floorUnitTitle } from "@/lib/floor-units";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,6 +30,8 @@ export function TableQrDialog({
 }) {
   const [dataUrl, setDataUrl] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
+  const kind = table?.kind === "ROOM" ? "ROOM" : "TABLE";
+  const displayName = table ? floorUnitDisplayName(table) : "—";
 
   const url = React.useMemo(() => {
     if (!restaurantId || !table) return "";
@@ -77,7 +80,8 @@ export function TableQrDialog({
     if (!dataUrl || !table) return;
     const a = document.createElement("a");
     a.href = dataUrl;
-    a.download = `table-${table.number}-qr.png`;
+    const slug = `${kind === "ROOM" ? "room" : "table"}-${table.number}`;
+    a.download = `${slug}-qr.png`;
     a.click();
   };
 
@@ -87,11 +91,12 @@ export function TableQrDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <QrCode className="size-5" />
-            Table QR — Table {table?.number ?? "—"}
+            {floorUnitTitle(kind)} QR — {displayName}
           </DialogTitle>
           <DialogDescription>
-            Print this code and place it on the table. Guests scan to open the menu and order for this
-            table.
+            {kind === "ROOM"
+              ? "Print this code for the room door or bedside. Guests scan to open the menu and order in-room dining."
+              : `Print this code and place it on the ${floorUnitNoun(kind)}. Guests scan to open the menu and order.`}
           </DialogDescription>
         </DialogHeader>
 

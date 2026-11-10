@@ -190,9 +190,9 @@ export default function AnalyticsPage() {
   });
 
   const tablesQuery = useQuery({
-    queryKey: qk.adminTables(restaurantId),
+    queryKey: qk.adminTables(restaurantId, "ROOM"),
     queryFn: async () => {
-      const raw = await api.admin.tables(restaurantId);
+      const raw = await api.admin.tables(restaurantId, "ROOM");
       return normalizeTablesResponse(raw);
     },
     enabled: !!restaurantId,

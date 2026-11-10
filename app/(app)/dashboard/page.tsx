@@ -138,9 +138,9 @@ export default function DashboardPage() {
   });
 
   const tablesQuery = useQuery({
-    queryKey: qk.adminTables(restaurantId ?? ""),
+    queryKey: qk.adminTables(restaurantId ?? "", "ROOM"),
     queryFn: async () => {
-      const raw = await api.admin.tables(restaurantId!);
+      const raw = await api.admin.tables(restaurantId!, "ROOM");
       return normalizeTablesResponse(raw);
     },
     enabled: !!restaurantId,
@@ -384,11 +384,11 @@ export default function DashboardPage() {
             href="/orders"
           />
           <StatCard
-            label="Active tables"
+            label="Active rooms"
             value={`${activeTables}`}
             icon={Table2}
             hint="Occupied or billing"
-            href="/tables"
+            href="/rooms"
           />
           <StatCard
             label="Pending kitchen"
@@ -474,11 +474,11 @@ export default function DashboardPage() {
           <div className="flex min-h-[420px] flex-col overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-white/[0.06] dark:bg-white/[0.03] lg:min-h-[480px]">
             <div className="shrink-0 px-6 pt-6 pb-4">
               <SectionHeader
-                title="Table status"
+                title="Room status"
                 description="Floor snapshot"
                 right={
                   <Link
-                    href="/tables"
+                    href="/rooms"
                     className="inline-flex items-center gap-1 text-[13px] font-medium text-primary hover:underline"
                   >
                     View all <ChevronRight className="size-4" />
@@ -488,11 +488,11 @@ export default function DashboardPage() {
             </div>
             <div className="flex min-h-0 flex-1 flex-col gap-3 px-6 pb-6">
               {tables.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">All tables available</p>
+                <p className="py-8 text-center text-sm text-muted-foreground">All rooms available</p>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                   {tables.slice(0, 4).map((t) => (
-                    <Link key={t.id} href="/tables" className="block">
+                    <Link key={t.id} href="/rooms" className="block">
                       <TableCard
                         table={t}
                         waiterName={t.waiterId ? waiterIdToName.get(t.waiterId) ?? null : null}

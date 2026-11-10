@@ -40,6 +40,16 @@ export function TablesIcon(props: IconProps) {
   );
 }
 
+export function RoomsIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M4 20V8l8-4 8 4v12" />
+      <path d="M10 20v-6h4v6" />
+      <path d="M4 10h16" />
+    </BaseIcon>
+  );
+}
+
 export function FloorMapIcon(props: IconProps) {
   return (
     <BaseIcon {...props}>

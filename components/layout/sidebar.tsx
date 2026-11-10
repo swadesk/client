@@ -27,9 +27,11 @@ import {
   SettingsIcon,
   ShiftIcon,
   ShieldIcon,
+  RoomsIcon,
   TablesIcon,
   WaitersIcon,
 } from "./sidebar-icons";
+import { FLOOR_UNITS } from "@/lib/floor-units";
 
 const superAdminNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: DashboardIcon },
@@ -40,6 +42,7 @@ const superAdminNavItems = [
 const memberNavIcons: Record<NavIconKey, ComponentType<{ className?: string }>> = {
   dashboard: DashboardIcon,
   tables: TablesIcon,
+  rooms: RoomsIcon,
   floorMap: FloorMapIcon,
   menu: MenuBookIcon,
   orders: OrdersIcon,
@@ -58,7 +61,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const restaurantId = useRestaurantStore((s) => s.activeRestaurantId);
   const activeRestaurant = useActiveRestaurant();
   const qrMenuHref = restaurantId
-    ? `/qr-menu/${restaurantId}/table_01?pickTable=1`
+    ? `/qr-menu/${restaurantId}/${FLOOR_UNITS.publicQrKind === "ROOM" ? "room_01" : "table_01"}?pickTable=1`
     : "/login";
   const showSuperAdmin = isSuperAdmin(user);
   const memberNavItems = getNavItemsForUser(user);

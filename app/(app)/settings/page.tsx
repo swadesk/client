@@ -85,6 +85,22 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-white/[0.06] dark:bg-white/[0.03]">
           <CardHeader>
+            <CardTitle className="text-lg">Payments</CardTitle>
+            <CardDescription>How guests settle room-service orders.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-xl border border-border/60 bg-muted/30 p-4 border-l-4 border-l-emerald-500">
+              <p className="text-sm font-medium text-foreground">Post-paid only</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Guests order via Room QR and pay staff later. Guest UPI / prepaid checkout is off.
+                Staff can record Cash, Card, or Other when closing the bill.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-white/[0.06] dark:bg-white/[0.03]">
+          <CardHeader>
             <CardTitle className="text-lg">Operational</CardTitle>
             <CardDescription>How QR orders flow into your kitchen.</CardDescription>
           </CardHeader>
