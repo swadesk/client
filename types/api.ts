@@ -30,6 +30,8 @@ export type AdminCreateTableRequest = {
   number: number;
   seats: number;
   status: TableStatus;
+  kind?: import("@/types/table").FloorUnitKind;
+  label?: string | null;
 };
 export type AdminCreateTableResponse = Table;
 

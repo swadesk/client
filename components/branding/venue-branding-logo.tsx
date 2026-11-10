@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { BrandLogo } from "@/components/branding/brand-logo";
+import { resolveMediaUrl } from "@/lib/media-url";
 import { cn } from "@/lib/utils";
 
 type VenueBrandingLogoProps = {
@@ -24,20 +25,20 @@ export function VenueBrandingLogo({
   alt = "Venue logo",
 }: VenueBrandingLogoProps) {
   const [failed, setFailed] = React.useState(false);
-  const trimmed = logoUrl?.trim();
+  const resolved = resolveMediaUrl(logoUrl);
 
   React.useEffect(() => {
     setFailed(false);
-  }, [trimmed]);
+  }, [resolved]);
 
-  if (!trimmed || failed) {
+  if (!resolved || failed) {
     return <BrandLogo height={height} className={className} />;
   }
 
   return (
     // eslint-disable-next-line @next/next/no-img-element -- user-provided URLs from API/uploads; avoids remotePatterns drift
     <img
-      src={trimmed}
+      src={resolved}
       alt={alt}
       className={cn(
         "block h-auto w-auto max-w-[min(100%,260px)] object-contain object-center",
@@ -64,20 +65,20 @@ export function VenueLogoMark({
   alt = "Venue",
 }: VenueLogoMarkProps) {
   const [failed, setFailed] = React.useState(false);
-  const trimmed = logoUrl?.trim();
+  const resolved = resolveMediaUrl(logoUrl);
 
   React.useEffect(() => {
     setFailed(false);
-  }, [trimmed]);
+  }, [resolved]);
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={!trimmed || failed ? "/branding/namasqr-logo.svg" : trimmed}
-      alt={!trimmed || failed ? "" : alt}
+      src={!resolved || failed ? "/branding/namasqr-logo.svg" : resolved}
+      alt={!resolved || failed ? "" : alt}
       className={cn("block shrink-0 object-contain", className)}
       style={{ width: size, height: size }}
-      aria-hidden={!trimmed || failed}
+      aria-hidden={!resolved || failed}
       onError={() => setFailed(true)}
     />
   );

@@ -3,6 +3,7 @@ import type { AuthUser, StaffRoleApi } from "@/types/auth";
 export type NavIconKey =
   | "dashboard"
   | "tables"
+  | "rooms"
   | "floorMap"
   | "menu"
   | "orders"
@@ -16,6 +17,7 @@ export type NavIconKey =
 
 export const navItems = [
   { href: "/dashboard", label: "Dashboard", iconKey: "dashboard" },
+  { href: "/rooms", label: "Rooms", iconKey: "rooms" },
   { href: "/tables", label: "Tables", iconKey: "tables" },
   { href: "/floor-map", label: "Floor map", iconKey: "floorMap" },
   { href: "/menu", label: "Menu", iconKey: "menu" },
@@ -32,18 +34,20 @@ export const navItems = [
 export const superAdminNavHrefs = ["/dashboard", "/super-admin", "/permissions"] as const;
 
 export const memberNavByRole: Record<StaffRoleApi, ReadonlyArray<(typeof navItems)[number]["href"]>> = {
-  /** Venue admin: floor shift UI is for waiters/managers only — omit `/shift` from nav. */
-  Admin: navItems.map((item) => item.href).filter((href) => href !== "/shift"),
-  Manager: ["/dashboard", "/orders", "/shift", "/tables", "/billing", "/kitchen"],
-  /** Billing is manager/admin; waiters use Tables for payment + Orders for the queue. */
-  Waiter: ["/orders", "/shift", "/tables"],
+  /** Venue admin: floor shift UI is for waiters/managers only — omit `/shift` from nav. Tables locked → Rooms. */
+  Admin: navItems
+    .map((item) => item.href)
+    .filter((href) => href !== "/shift" && href !== "/tables"),
+  Manager: ["/dashboard", "/orders", "/shift", "/rooms", "/billing", "/kitchen"],
+  /** Billing is manager/admin; waiters use Rooms for payment + Orders for the queue. */
+  Waiter: ["/orders", "/shift", "/rooms"],
   /** KDS plus shift/break, menu & stock (API must allow KITCHEN on admin menu/inventory routes). */
   Kitchen: ["/kitchen", "/shift", "/menu", "/inventory"],
 };
 
 /** Sidebar order for roles that should not follow the global `navItems` sequence. */
 const NAV_ORDER_BY_ROLE: Partial<Record<StaffRoleApi, readonly string[]>> = {
-  Waiter: ["/orders", "/shift", "/tables"],
+  Waiter: ["/orders", "/shift", "/rooms"],
   Kitchen: ["/kitchen", "/shift", "/menu", "/inventory"],
 };
 

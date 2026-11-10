@@ -71,9 +71,9 @@ export default function BillingPage() {
   }, [user, canViewBilling, router]);
 
   const tablesQuery = useQuery({
-    queryKey: qk.adminTables(restaurantId ?? ""),
+    queryKey: qk.adminTables(restaurantId ?? "", "ROOM"),
     queryFn: async () => {
-      const raw = await api.admin.tables(restaurantId!);
+      const raw = await api.admin.tables(restaurantId!, "ROOM");
       return normalizeTablesResponse(raw);
     },
     enabled: !!restaurantId && !!user && canViewBilling,
@@ -309,7 +309,7 @@ export default function BillingPage() {
                           <Button
                             variant="secondary"
                             size="sm"
-                            onClick={() => router.push("/tables")}
+                            onClick={() => router.push("/rooms")}
                           >
                             Open table billing
                           </Button>

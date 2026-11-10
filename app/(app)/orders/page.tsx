@@ -224,7 +224,7 @@ export default function OrdersPage() {
                 From your current queue—open orders at these tables.
               </CardDescription>
             </div>
-            <Button type="button" variant="outline" size="sm" onClick={() => router.push("/tables")}>
+            <Button type="button" variant="outline" size="sm" onClick={() => router.push("/rooms")}>
               Open tables
             </Button>
           </CardHeader>

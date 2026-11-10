@@ -30,15 +30,20 @@ function formatTableLabelFromId(id: string): string {
   if (t.toLowerCase() === "takeaway" || t.toLowerCase() === "non-table") {
     return "Takeaway / Non-table";
   }
+  const room = /^room_(\d+)$/i.exec(t);
+  if (room) {
+    const n = Number.parseInt(room[1], 10);
+    return Number.isFinite(n) ? `Room ${n}` : `Room ${t}`;
+  }
   const padded = /^table_(\d+)$/i.exec(t);
   if (padded) {
     const n = Number.parseInt(padded[1], 10);
     return Number.isFinite(n) ? `Table ${n}` : `Table ${t}`;
   }
   if (/^[0-9a-f-]{36}$/i.test(t)) {
-    return `Table (${t.slice(0, 8)}…)`;
+    return `Location (${t.slice(0, 8)}…)`;
   }
-  return `Table ${t}`;
+  return t;
 }
 
 function parseTableOptions(payload: unknown): QrTableOption[] {
@@ -73,7 +78,11 @@ function parseTableOptions(payload: unknown): QrTableOption[] {
         [obj.label, obj.name, obj.title, obj.displayName, obj.tableName].find(
           (v) => typeof v === "string" && String(v).trim(),
         ) ??
-        (numberCandidate != null ? `Table ${numberCandidate}` : formatTableLabelFromId(id));
+        (numberCandidate != null
+          ? formatTableLabelFromId(
+              typeof obj.code === "string" ? obj.code : `room_${numberCandidate}`,
+            )
+          : formatTableLabelFromId(id));
       return { id, label: String(labelText), tableCode };
     })
     .filter((v): v is QrTableOption => Boolean(v));

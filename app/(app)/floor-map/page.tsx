@@ -31,7 +31,7 @@ function TableNode({ table, waiterName }: { table: Table; waiterName?: string | 
 
   return (
     <Link
-      href="/tables"
+      href="/rooms"
       className={cn(
         "group flex min-h-32 flex-col justify-between rounded-[26px] border-2 p-4 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.18)] transition-all hover:-translate-y-1 hover:shadow-[0_16px_32px_-18px_rgba(0,0,0,0.22)]",
         statusStyles[table.status],
@@ -39,15 +39,17 @@ function TableNode({ table, waiterName }: { table: Table; waiterName?: string | 
     >
       <div className="flex items-start justify-between gap-3">
         <span className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-70">
-          Table
+          Room
         </span>
         <span className="rounded-full bg-white/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] dark:bg-white/10">
           {table.status}
         </span>
       </div>
       <div>
-        <div className="text-3xl font-semibold tracking-tight tabular-nums">T{table.number}</div>
-        <div className="mt-1 text-xs font-medium opacity-80">{table.seats} seats</div>
+        <div className="text-3xl font-semibold tracking-tight tabular-nums">R{table.number}</div>
+        <div className="mt-1 text-xs font-medium opacity-80">
+          {table.seats} guest{table.seats === 1 ? "" : "s"}
+        </div>
         {waiterName ? (
           <div className="mt-2 text-[11px] font-medium opacity-80">{waiterName}</div>
         ) : null}
@@ -93,9 +95,9 @@ export default function FloorMapPage() {
   const [filter, setFilter] = React.useState<FloorFilter>("All");
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: qk.adminTables(restaurantId ?? ""),
+    queryKey: qk.adminTables(restaurantId ?? "", "ROOM"),
     queryFn: async () => {
-      const raw = await api.admin.tables(restaurantId!);
+      const raw = await api.admin.tables(restaurantId!, "ROOM");
       return normalizeTablesResponse(raw);
     },
     enabled: !!restaurantId,
@@ -130,7 +132,7 @@ export default function FloorMapPage() {
       <div className="space-y-12">
         <PageHeader
           title="Floor map"
-          description="Visual layout of tables and seating on your floor."
+          description="Visual layout of guest rooms on your floor."
         />
         <EmptyState
           title="Select a restaurant"
@@ -149,20 +151,20 @@ export default function FloorMapPage() {
     <div className="space-y-12">
       <PageHeader
         title="Floor map"
-        description="Visual layout of tables and seating on your floor."
+        description="Visual layout of guest rooms on your floor."
         actions={
           <Link
-            href="/tables"
+            href="/rooms"
             className="text-sm font-medium text-primary hover:underline"
           >
-            Manage tables
+            Manage rooms
           </Link>
         }
       />
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
         <SummaryCard label="Occupancy" value={`${occupancy}%`} />
-        <SummaryCard label="Active tables" value={`${activeCount}`} tone="amber" />
+        <SummaryCard label="Active rooms" value={`${activeCount}`} tone="amber" />
         <SummaryCard label="Billing now" value={`${billingCount}`} tone="blue" />
       </div>
 
@@ -177,9 +179,9 @@ export default function FloorMapPage() {
         emptyState={
           <div className="overflow-hidden rounded-2xl border border-black/[0.04] bg-white p-12 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-white/[0.06] dark:bg-white/[0.03]">
             <EmptyState
-              title="No tables"
-              description="Add tables to see your floor map."
-              primaryAction={{ label: "Add tables", onClick: () => router.push("/tables") }}
+              title="No rooms"
+              description="Add guest rooms to see your floor map."
+              primaryAction={{ label: "Add rooms", onClick: () => router.push("/rooms") }}
             />
           </div>
         }
@@ -210,14 +212,14 @@ export default function FloorMapPage() {
 
               <div className="rounded-2xl bg-[linear-gradient(180deg,rgba(15,23,42,0.02),rgba(15,23,42,0.05))] p-4 dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.05))]">
                 <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-black/[0.04] bg-white/80 px-4 py-3 backdrop-blur dark:border-white/[0.06] dark:bg-white/[0.03]">
-                  <span className="text-sm font-medium text-foreground">{sortedTables.length} tables in view</span>
+                  <span className="text-sm font-medium text-foreground">{sortedTables.length} rooms in view</span>
                   <span className="text-xs text-muted-foreground">{activeCount} currently active</span>
                   <span className="text-xs text-muted-foreground">{billingCount} billing</span>
                 </div>
 
                 {sortedTables.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-border bg-white/70 px-4 py-12 text-center text-sm text-muted-foreground dark:bg-white/[0.03]">
-                    No tables match this filter
+                    No rooms match this filter
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
@@ -264,7 +266,7 @@ export default function FloorMapPage() {
                   Quick action
                 </div>
                 <Link
-                  href="/tables"
+                  href="/rooms"
                   className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
                 >
                   Manage tables

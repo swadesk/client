@@ -3,6 +3,7 @@
 import * as React from "react";
 import { UtensilsCrossed } from "lucide-react";
 import { MENU_IMAGE_FALLBACK } from "@/lib/menu-images";
+import { resolveMediaUrl } from "@/lib/media-url";
 import { cn } from "@/lib/utils";
 
 type MenuItemImageProps = {
@@ -29,8 +30,13 @@ export function MenuItemImage({
   sizes,
 }: MenuItemImageProps) {
   const [failed, setFailed] = React.useState(false);
+  const resolved = resolveMediaUrl(src);
 
-  if (!src) {
+  React.useEffect(() => {
+    setFailed(false);
+  }, [resolved]);
+
+  if (!resolved) {
     return (
       <div
         className={cn(
@@ -43,7 +49,7 @@ export function MenuItemImage({
     );
   }
 
-  const effective = failed ? MENU_IMAGE_FALLBACK : src;
+  const effective = failed ? MENU_IMAGE_FALLBACK : resolved;
 
   if (fill) {
     return (

@@ -2,8 +2,10 @@ import type { QueryClient } from "@tanstack/react-query";
 
 export const qk = {
   adminMenu: (restaurantId: string) => ["admin.menu", restaurantId] as const,
-  adminTables: (restaurantId: string) => ["admin.tables", restaurantId] as const,
-  waiterTables: (restaurantId: string) => ["waiter.tables", restaurantId] as const,
+  adminTables: (restaurantId: string, kind?: string) =>
+    ["admin.tables", restaurantId, kind ?? "all"] as const,
+  waiterTables: (restaurantId: string, kind?: string) =>
+    ["waiter.tables", restaurantId, kind ?? "all"] as const,
   waiterMe: (restaurantId: string, userId: string) =>
     ["waiter.me", restaurantId, userId] as const,
   adminWaiters: (restaurantId: string) => ["admin.waiters", restaurantId] as const,

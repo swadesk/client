@@ -129,7 +129,7 @@ export function CartDrawer({
       }
       const hint =
         err.errorCode === "TABLE_NOT_FOUND"
-          ? " This table is not recognized for this venue—open the link from your table QR or pick a table from the list."
+          ? " This room is not recognized for this venue—open the link from your room QR or pick a room from the list."
           : "";
       toast.error(
         (err.message?.trim() || "Failed to place order.") +
@@ -168,7 +168,8 @@ export function CartDrawer({
         <SheetHeader className="shrink-0 border-b border-black/[0.06] px-5 py-4 pr-12 text-left dark:border-white/[0.08]">
           <SheetTitle className="text-lg font-medium tracking-tight">Your cart</SheetTitle>
           <p className="text-[13px] font-normal text-muted-foreground">
-            Review items and place your order.
+            Review items and place your order. Payment is collected after service (post-paid) — no UPI
+            checkout here.
           </p>
         </SheetHeader>
 

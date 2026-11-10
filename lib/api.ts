@@ -512,9 +512,12 @@ export const api = {
         { method: "GET" },
       ),
     /** Floor staff table list (avoids 403 on GET /api/admin/tables for Waiter). */
-    tables: (restaurantId: string) =>
+    tables: (restaurantId: string, kind?: import("@/types/table").FloorUnitKind) =>
       apiFetch<import("@/types/api").AdminTablesGetResponse>(
-        withRestaurantId("/api/waiter/tables", restaurantId),
+        withRestaurantId(
+          kind ? `/api/waiter/tables?kind=${encodeURIComponent(kind)}` : "/api/waiter/tables",
+          restaurantId,
+        ),
         { method: "GET" },
       ),
     updateOrder: (payload: import("@/types/api").WaiterUpdateOrderRequest) =>
@@ -617,9 +620,12 @@ export const api = {
         withRestaurantId(`/api/admin/menu/items/${itemId}`, restaurantId),
         { method: "DELETE" },
       ),
-    tables: (restaurantId: string) =>
+    tables: (restaurantId: string, kind?: import("@/types/table").FloorUnitKind) =>
       apiFetch<import("@/types/api").AdminTablesGetResponse>(
-        withRestaurantId("/api/admin/tables", restaurantId),
+        withRestaurantId(
+          kind ? `/api/admin/tables?kind=${encodeURIComponent(kind)}` : "/api/admin/tables",
+          restaurantId,
+        ),
         { method: "GET" },
       ),
     /** GET /api/admin/waiters?restaurantId=… */
