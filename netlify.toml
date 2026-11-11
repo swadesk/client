@@ -8,4 +8,4 @@
 [build.environment]
   NEXT_PUBLIC_API_ORIGIN = "https://server-production-4c0e8def.up.railway.app"
   NEXT_PUBLIC_SOCKET_ORIGIN = "https://server-production-4c0e8def.up.railway.app"
-  NEXT_PUBLIC_APP_URL = "https://swadesk.netlify.app"
+  NEXT_PUBLIC_APP_URL = "https://namasqr.com"
