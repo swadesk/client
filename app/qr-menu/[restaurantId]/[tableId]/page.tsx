@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { normalizeAdminMenuPayload } from "@/lib/menu-normalize";
 import { filterCategoriesForQrMenu, filterItemsForQrMenu } from "@/lib/qr-menu-guest";
 import { qrThemeFromHex, qrThemeFromLogoUrl, type QrVenueThemeCssVars } from "@/lib/qr-venue-theme";
-import { MapPin, UtensilsCrossed } from "lucide-react";
+import { Clock3, MapPin, UtensilsCrossed } from "lucide-react";
 
 type QrTableOption = {
   id: string;
@@ -159,6 +159,10 @@ function QrMenuPageInner() {
   );
   const restaurantName = data?.name ?? "Menu";
   const venueLogoUrl = data?.logoUrl;
+  const acceptingOrders = data?.acceptingOrders !== false;
+  const closedMessage =
+    data?.closedMessage?.trim() ||
+    "We are currently closed. Please check back during our open hours.";
   const brandPrimaryHex = React.useMemo(() => pickBrandPrimaryHex(data), [data]);
   const menuShapeInvalid =
     !!data &&
@@ -256,6 +260,37 @@ function QrMenuPageInner() {
   const filtered = items.filter((i) => i.categoryId === activeCategoryId);
   const activeCategoryName =
     categories.find((c) => c.id === activeCategoryId)?.name ?? "All";
+
+  if (!isLoading && !isError && !menuShapeInvalid && data && !acceptingOrders) {
+    return (
+      <div
+        className="relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background text-foreground"
+        style={themeStyle}
+      >
+        <div className="h-1 shrink-0 bg-gradient-to-r from-brand-navy via-primary to-brand-navy" />
+        <main className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center px-6 text-center">
+          <VenueBrandingLogo
+            logoUrl={venueLogoUrl}
+            height={52}
+            className="mx-auto max-w-[240px] drop-shadow-sm"
+            alt={`${restaurantName} logo`}
+          />
+          <h1 className="mt-6 text-balance font-sans text-2xl font-bold tracking-tight">
+            {restaurantName}
+          </h1>
+          <div className="mt-8 w-full rounded-[1.35rem] border border-black/[0.06] bg-card/95 p-6 shadow-card ring-1 ring-primary/[0.08] dark:border-white/[0.08]">
+            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted text-primary">
+              <Clock3 className="size-6" strokeWidth={2.25} aria-hidden />
+            </div>
+            <p className="mt-4 text-xs font-bold uppercase tracking-[0.16em] text-primary/90">
+              Restaurant closed
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{closedMessage}</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div

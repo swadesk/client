@@ -8,6 +8,10 @@ import type { Invoice } from "@/types/invoice";
 export type ApiOk = { ok: true };
 
 /** Full menu payload for staff + QR (scoped by restaurant). */
+export type WeeklyHoursInterval = { start: string; end: string };
+export type WeekdayKey = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat";
+export type WeeklyHours = Partial<Record<WeekdayKey, WeeklyHoursInterval[]>>;
+
 export type RestaurantMenuResponse = {
   restaurantId: string;
   name: string;
@@ -18,6 +22,11 @@ export type RestaurantMenuResponse = {
    * If omitted, the client may sample `logoUrl` when CORS allows.
    */
   brandPrimary?: string | null;
+  /** False when the venue is force-closed or outside weeklyHours. */
+  acceptingOrders?: boolean;
+  /** Guest-facing closed copy when acceptingOrders is false. */
+  closedMessage?: string | null;
+  timezone?: string;
   categories: MenuCategory[];
   items: MenuItem[];
 };
@@ -186,6 +195,12 @@ export type RestaurantSettings = {
   prepaidUpiId?: string | null;
   prepaidUpiName?: string | null;
   prepaidUpiQrUrl?: string | null;
+  timezone?: string;
+  /** Master switch for QR/customer ordering. */
+  orderingEnabled?: boolean;
+  closedMessage?: string | null;
+  /** Null = no weekly schedule (always open when orderingEnabled). */
+  weeklyHours?: WeeklyHours | null;
 };
 export type AdminUpdateSettingsRequest = {
   restaurantId: string;
@@ -194,6 +209,10 @@ export type AdminUpdateSettingsRequest = {
   prepaidUpiId?: string | null;
   prepaidUpiName?: string | null;
   prepaidUpiQrUrl?: string | null;
+  timezone?: string;
+  orderingEnabled?: boolean;
+  closedMessage?: string | null;
+  weeklyHours?: WeeklyHours | null;
 };
 
 /** Inventory update */

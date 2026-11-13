@@ -17,6 +17,8 @@ import { useAuthStore } from "@/store/auth-store";
 import { canAccessRouteForUser } from "@/components/layout/nav-items";
 import { getPostAuthRedirectPath } from "@/lib/auth-routing";
 import { EmptyState } from "@/components/shared/empty-state";
+import { OrderingHoursCard } from "@/components/features/settings/ordering-hours-card";
+import { qk } from "@/lib/query-keys";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -42,7 +44,10 @@ export default function SettingsPage() {
     mutationFn: (data: Omit<import("@/types/api").AdminUpdateSettingsRequest, "restaurantId">) =>
       api.admin.updateSettings({ restaurantId: restaurantId!, ...data }),
     onSuccess: () => {
-      if (restaurantId) void qc.invalidateQueries({ queryKey: ["admin.settings", restaurantId] });
+      if (restaurantId) {
+        void qc.invalidateQueries({ queryKey: ["admin.settings", restaurantId] });
+        void qc.invalidateQueries({ queryKey: qk.qrMenu(restaurantId) });
+      }
       toast.success("Settings saved");
     },
     onError: () => toast.error("Failed to save settings"),
@@ -180,6 +185,15 @@ export default function SettingsPage() {
             </p>
           </CardContent>
         </Card>
+
+        <OrderingHoursCard
+          orderingEnabled={settings?.orderingEnabled ?? true}
+          timezone={settings?.timezone ?? "Asia/Kolkata"}
+          closedMessage={settings?.closedMessage ?? ""}
+          weeklyHours={settings?.weeklyHours ?? null}
+          saving={updateMutation.isPending}
+          onSave={(patch) => updateMutation.mutate(patch)}
+        />
 
       </div>
       )}
