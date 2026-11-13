@@ -113,20 +113,20 @@ export function ContactSalesForm({ className }: { className?: string }) {
     <form
       onSubmit={onSubmit}
       className={cn(
-        "space-y-4 rounded-2xl border border-[#1a2744]/10 bg-white p-5 shadow-[0_20px_50px_-28px_rgba(26,39,68,0.25)]",
+        "min-w-0 space-y-4 rounded-2xl border border-border bg-card p-5 shadow-[0_20px_50px_-32px_hsl(222_47%_11%/0.28)] sm:p-6",
         className,
       )}
     >
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2">
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-[#1a2744]">
-            Full name <span className="text-[#e87a1a]">*</span>
+          <label className="mb-1.5 block text-sm font-medium text-foreground">
+            Full name <span className="text-primary">*</span>
           </label>
           <Input value={form.fullName} onChange={(e) => setField("fullName", e.target.value)} />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-[#1a2744]">
-            Work email <span className="text-[#e87a1a]">*</span>
+          <label className="mb-1.5 block text-sm font-medium text-foreground">
+            Work email <span className="text-primary">*</span>
           </label>
           <Input
             type="email"
@@ -136,16 +136,16 @@ export function ContactSalesForm({ className }: { className?: string }) {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2">
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-[#1a2744]">
-            Phone number <span className="text-[#e87a1a]">*</span>
+          <label className="mb-1.5 block text-sm font-medium text-foreground">
+            Phone number <span className="text-primary">*</span>
           </label>
           <Input value={form.phone} onChange={(e) => setField("phone", e.target.value)} />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-[#1a2744]">
-            Hotel / company <span className="text-[#e87a1a]">*</span>
+          <label className="mb-1.5 block text-sm font-medium text-foreground">
+            Hotel / company <span className="text-primary">*</span>
           </label>
           <Input
             value={form.companyName}
@@ -154,26 +154,26 @@ export function ContactSalesForm({ className }: { className?: string }) {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-[#1a2744]">
-            Role <span className="text-[#e87a1a]">*</span>
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="min-w-0">
+          <label className="mb-1.5 block text-sm font-medium text-foreground">
+            Role <span className="text-primary">*</span>
           </label>
           <Input value={form.role} onChange={(e) => setField("role", e.target.value)} />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-[#1a2744]">City</label>
+          <label className="mb-1.5 block text-sm font-medium text-foreground">City</label>
           <Input value={form.city} onChange={(e) => setField("city", e.target.value)} />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-[#1a2744]">Country</label>
+          <label className="mb-1.5 block text-sm font-medium text-foreground">Country</label>
           <Input value={form.country} onChange={(e) => setField("country", e.target.value)} />
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2">
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-[#1a2744]">
+          <label className="mb-1.5 block text-sm font-medium text-foreground">
             Monthly order volume
           </label>
           <Input
@@ -186,8 +186,8 @@ export function ContactSalesForm({ className }: { className?: string }) {
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-[#1a2744]">
-            Expected go-live <span className="text-[#e87a1a]">*</span>
+          <label className="mb-1.5 block text-sm font-medium text-foreground">
+            Expected go-live <span className="text-primary">*</span>
           </label>
           <Input
             value={form.timeline}
@@ -198,7 +198,7 @@ export function ContactSalesForm({ className }: { className?: string }) {
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-[#1a2744]">Current POS / stack</label>
+        <label className="mb-1.5 block text-sm font-medium text-foreground">Current POS / stack</label>
         <Input
           value={form.currentPos}
           onChange={(e) => setField("currentPos", e.target.value)}
@@ -207,7 +207,7 @@ export function ContactSalesForm({ className }: { className?: string }) {
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-[#1a2744]">
+        <label className="mb-1.5 block text-sm font-medium text-foreground">
           What are you trying to improve?
         </label>
         <Textarea
