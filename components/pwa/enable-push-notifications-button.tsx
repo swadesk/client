@@ -64,47 +64,60 @@ export function EnablePushNotificationsButton() {
     );
   }
 
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      className="hidden rounded-xl md:inline-flex"
-      onClick={async () => {
+  const enablePush = async () => {
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") {
+        toast.error("Allow notifications in your browser to use push alerts.");
+        return;
+      }
+      const sub = await subscribeWebPush();
+      if (!sub) {
+        toast.error("Push is not available on this device or install is incomplete.");
+        return;
+      }
+      const res = await registerPushSubscriptionWithServer({
+        subscription: sub.toJSON(),
+        restaurantId: restaurantId ?? null,
+      });
+      if (!res.ok) {
+        let msg = `Could not save subscription (${res.status})`;
         try {
-          const perm = await Notification.requestPermission();
-          if (perm !== "granted") {
-            toast.error("Allow notifications in your browser to use push alerts.");
-            return;
-          }
-          const sub = await subscribeWebPush();
-          if (!sub) {
-            toast.error("Push is not available on this device or install is incomplete.");
-            return;
-          }
-          const res = await registerPushSubscriptionWithServer({
-            subscription: sub.toJSON(),
-            restaurantId: restaurantId ?? null,
-          });
-          if (!res.ok) {
-            let msg = `Could not save subscription (${res.status})`;
-            try {
-              const j = (await res.json()) as { message?: unknown };
-              if (typeof j.message === "string") msg = j.message;
-            } catch {
-              /* ignore */
-            }
-            toast.error(msg);
-            return;
-          }
-          setSubscribed(true);
-          toast.success("Background push alerts enabled for this device");
-        } catch (e) {
-          toast.error(e instanceof Error ? e.message : "Push setup failed");
+          const j = (await res.json()) as { message?: unknown };
+          if (typeof j.message === "string") msg = j.message;
+        } catch {
+          /* ignore */
         }
-      }}
-    >
-      <BellRing className="mr-1 size-4" />
-      Push alerts
-    </Button>
+        toast.error(msg);
+        return;
+      }
+      setSubscribed(true);
+      toast.success("Background push alerts enabled for this device");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Push setup failed");
+    }
+  };
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="icon-touch"
+        className="rounded-xl md:hidden"
+        aria-label="Enable push alerts"
+        onClick={() => void enablePush()}
+      >
+        <BellRing className="size-4" />
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        className="hidden rounded-xl md:inline-flex"
+        onClick={() => void enablePush()}
+      >
+        <BellRing className="mr-1 size-4" />
+        Push alerts
+      </Button>
+    </>
   );
 }

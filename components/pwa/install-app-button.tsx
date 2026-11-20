@@ -31,19 +31,32 @@ export function InstallAppButton() {
 
   if (!deferredPrompt) return null;
 
+  const install = async () => {
+    await deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    setDeferredPrompt(null);
+  };
+
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      className="hidden rounded-xl md:inline-flex"
-      onClick={async () => {
-        await deferredPrompt.prompt();
-        await deferredPrompt.userChoice;
-        setDeferredPrompt(null);
-      }}
-    >
-      <Download className="mr-1 size-4" />
-      Install app
-    </Button>
+    <>
+      <Button
+        variant="outline"
+        size="icon-touch"
+        className="rounded-xl md:hidden"
+        aria-label="Install app"
+        onClick={() => void install()}
+      >
+        <Download className="size-4" />
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        className="hidden rounded-xl md:inline-flex"
+        onClick={() => void install()}
+      >
+        <Download className="mr-1 size-4" />
+        Install app
+      </Button>
+    </>
   );
 }

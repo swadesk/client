@@ -512,9 +512,9 @@ export default function AnalyticsPage() {
             : "Revenue trends, top items, and ordering peaks."
         }
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="size-4 text-muted-foreground" />
+          <div className="flex w-full flex-col gap-2 sm:w-auto">
+            <div className="flex min-w-0 items-center gap-2">
+              <CalendarDays className="size-4 shrink-0 text-muted-foreground" />
               <Input
                 type="date"
                 value={selectedDate}
@@ -523,26 +523,30 @@ export default function AnalyticsPage() {
                   if (!e.target.value) return;
                   setSelectedDate(clampDateToToday(e.target.value));
                 }}
-                className="h-8 w-[170px]"
+                className="w-full sm:w-[170px]"
               />
             </div>
-            <Button size="sm" variant={rangeDays === 1 ? "default" : "ghost"} onClick={() => setRangeDays(1)}>
-              1D
-            </Button>
-            <Button size="sm" variant={rangeDays === 7 ? "default" : "ghost"} onClick={() => setRangeDays(7)}>
-              7D
-            </Button>
-            <Button size="sm" variant={rangeDays === 30 ? "default" : "ghost"} onClick={() => setRangeDays(30)}>
-              30D
-            </Button>
-            <Button size="sm" variant="outline" onClick={refreshAll} disabled={isRefreshing}>
-              <RefreshCw className={isRefreshing ? "animate-spin" : ""} />
-              Refresh
-            </Button>
-            <Button size="sm" onClick={downloadAuditExcel} disabled={auditRows.length === 0}>
-              Download audit Excel
-            </Button>
-            <Badge variant="outline">
+            <div className="grid grid-cols-3 gap-2">
+              <Button size="sm" variant={rangeDays === 1 ? "default" : "ghost"} onClick={() => setRangeDays(1)}>
+                1D
+              </Button>
+              <Button size="sm" variant={rangeDays === 7 ? "default" : "ghost"} onClick={() => setRangeDays(7)}>
+                7D
+              </Button>
+              <Button size="sm" variant={rangeDays === 30 ? "default" : "ghost"} onClick={() => setRangeDays(30)}>
+                30D
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:flex">
+              <Button size="sm" variant="outline" onClick={refreshAll} disabled={isRefreshing}>
+                <RefreshCw className={isRefreshing ? "animate-spin" : ""} />
+                Refresh
+              </Button>
+              <Button size="sm" onClick={downloadAuditExcel} disabled={auditRows.length === 0}>
+                Download audit Excel
+              </Button>
+            </div>
+            <Badge variant="outline" className="w-full justify-center sm:w-auto">
               {lastSyncedAt ? `Last synced ${formatIstTime(lastSyncedAt)}` : "Syncing..."}
             </Badge>
           </div>
@@ -651,7 +655,37 @@ export default function AnalyticsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="rounded-xl border border-border/60">
+            <div className="space-y-3 md:hidden">
+              {dayWiseLog.length === 0 ? (
+                <p className="rounded-xl border border-border/60 px-3 py-6 text-center text-sm text-muted-foreground">
+                  No day-wise rows for selected range.
+                </p>
+              ) : (
+                dayWiseLog.map((row) => (
+                  <article key={row.dateIst} className="rounded-xl border border-border/60 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="font-medium">{row.dateIst}</p>
+                      <p className="shrink-0 font-semibold tabular-nums">{formatMoneyFromCents(row.revenueCents)}</p>
+                    </div>
+                    <dl className="mt-2 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                      <div>
+                        <dt>Orders</dt>
+                        <dd className="font-medium text-foreground">{row.orders}</dd>
+                      </div>
+                      <div>
+                        <dt>Avg order</dt>
+                        <dd className="font-medium text-foreground">{formatMoneyFromCents(row.avgOrderValueCents)}</dd>
+                      </div>
+                      <div className="col-span-2">
+                        <dt>Top attendant</dt>
+                        <dd className="font-medium text-foreground">{row.topAttendant}</dd>
+                      </div>
+                    </dl>
+                  </article>
+                ))
+              )}
+            </div>
+            <div className="hidden rounded-xl border border-border/60 md:block">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -683,7 +717,33 @@ export default function AnalyticsPage() {
                 </TableBody>
               </Table>
             </div>
-            <div className="rounded-xl border border-border/60">
+            <div className="space-y-3 md:hidden">
+              {auditRows.length === 0 ? (
+                <p className="rounded-xl border border-border/60 px-3 py-6 text-center text-sm text-muted-foreground">
+                  No order audit details for selected range.
+                </p>
+              ) : (
+                auditRows.slice(0, 20).map((row) => (
+                  <article key={row.orderId} className="rounded-xl border border-border/60 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-medium">
+                          {row.dateIst} · {row.timeIst}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">Table {row.tableNumber}</p>
+                      </div>
+                      <p className="shrink-0 font-semibold tabular-nums">{formatMoneyFromCents(row.totalCents)}</p>
+                    </div>
+                    <p className="mt-2 text-sm leading-snug">{row.lineItems || "-"}</p>
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                      <span>{row.status}</span>
+                      <span className="min-w-0 truncate">{row.attendedBy}</span>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+            <div className="hidden rounded-xl border border-border/60 md:block">
               <Table>
                 <TableHeader>
                   <TableRow>

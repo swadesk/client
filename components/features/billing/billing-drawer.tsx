@@ -186,7 +186,7 @@ export function BillingDrawer({
           "max-h-[min(90vh,640px)] flex flex-col",
         )}
       >
-        <DialogHeader className="space-y-3 border-b border-border/60 bg-muted/20 px-6 py-5 text-left">
+        <DialogHeader className="space-y-3 border-b border-border/60 bg-muted/20 px-4 py-4 text-left sm:px-6 sm:py-5">
           <div className="flex flex-wrap items-center gap-2">
             <DialogTitle className="text-xl font-semibold tracking-tight">
               Collect payment
@@ -227,7 +227,7 @@ export function BillingDrawer({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
           <div className="space-y-5 pb-[max(1rem,env(safe-area-inset-bottom))]">
             {!bill ? (
               <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">

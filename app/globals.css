@@ -200,6 +200,64 @@ html:has([data-landing]) {
   }
 }
 
+/*
+  Phone admin: larger tap targets, tighter stacks, and no sideways page scroll.
+  Dialogs are portaled outside the main scroller, so they are targeted too.
+*/
+@media (max-width: 767px) {
+  [data-app-shell] {
+    overflow-x: clip;
+  }
+
+  [data-app-main] :where(.space-y-12) > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1.5rem;
+  }
+
+  [data-app-main] :where(.space-y-10) > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1.25rem;
+  }
+
+  [data-app-main] [data-slot="card-description"] {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  [data-app-main] [data-slot="button"][data-size="default"],
+  [data-app-main] [data-slot="button"][data-size="sm"],
+  [data-app-main] [data-slot="button"][data-size="lg"],
+  [data-slot="dialog-content"] [data-slot="button"][data-size="default"],
+  [data-slot="dialog-content"] [data-slot="button"][data-size="sm"],
+  [data-slot="dialog-content"] [data-slot="button"][data-size="lg"],
+  [data-slot="sheet-content"] [data-slot="button"][data-size="default"],
+  [data-slot="sheet-content"] [data-slot="button"][data-size="sm"],
+  [data-slot="sheet-content"] [data-slot="button"][data-size="lg"] {
+    min-height: 2.75rem;
+  }
+
+  [data-slot="dialog-footer"] [data-slot="button"] {
+    width: 100%;
+    min-height: 2.75rem;
+  }
+
+  [data-app-main] [data-slot="input"],
+  [data-app-main] [data-slot="textarea"],
+  [data-app-main] [data-slot="select-trigger"],
+  [data-slot="dialog-content"] [data-slot="input"],
+  [data-slot="dialog-content"] [data-slot="textarea"],
+  [data-slot="dialog-content"] [data-slot="select-trigger"] {
+    min-height: 2.75rem;
+    font-size: 16px;
+  }
+
+  [data-slot="dropdown-menu-item"],
+  [data-slot="select-item"] {
+    min-height: 2.75rem;
+    font-size: 16px;
+  }
+}
+
 /* Invoice print: hide rest of page when printing */
 @media print {
   body * {

@@ -23,16 +23,22 @@ export function TopItemsChart({
   return (
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ left: 8, right: 8, top: 8, bottom: 0 }}>
+        <BarChart data={data} margin={{ left: 0, right: 4, top: 8, bottom: 28 }}>
           <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
           <XAxis
             dataKey="name"
             tickLine={false}
             axisLine={false}
             interval={0}
-            tick={{ fontSize: 11 }}
+            tick={{ fontSize: 10 }}
+            height={48}
+            angle={-28}
+            textAnchor="end"
+            tickFormatter={(value: string) =>
+              value.length > 12 ? `${value.slice(0, 11)}…` : value
+            }
           />
-          <YAxis tickLine={false} axisLine={false} width={40} />
+          <YAxis tickLine={false} axisLine={false} width={28} tick={{ fontSize: 11 }} />
           <Tooltip
             content={({ active, payload, label }) => {
               if (!active || !payload?.length) return null;

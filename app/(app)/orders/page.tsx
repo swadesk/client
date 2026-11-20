@@ -185,7 +185,7 @@ export default function OrdersPage() {
             : "Track and progress active orders in real-time."
         }
         actions={
-          <div className="flex gap-2">
+          <div className={waiterMode ? "grid grid-cols-1" : "grid grid-cols-2 gap-2 sm:flex"}>
             {waiterMode ? (
               <Button variant="secondary" size="sm" onClick={() => router.push("/profile")}>
                 My profile
@@ -224,7 +224,7 @@ export default function OrdersPage() {
                 From your current queue—open orders at these tables.
               </CardDescription>
             </div>
-            <Button type="button" variant="outline" size="sm" onClick={() => router.push("/rooms")}>
+            <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => router.push("/rooms")}>
               Open tables
             </Button>
           </CardHeader>

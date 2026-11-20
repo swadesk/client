@@ -121,7 +121,45 @@ export default function PermissionsPage() {
           />
         }
       >
-        <div className="overflow-hidden rounded-2xl border bg-card">
+        <div className="space-y-3 md:hidden">
+          {restaurants.map((r) => (
+            <article key={r.id} className="rounded-2xl border bg-card p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="font-medium">{r.name}</h3>
+                  {r.address ? (
+                    <p className="mt-0.5 text-xs text-muted-foreground">{r.address}</p>
+                  ) : null}
+                  <p className="mt-1 font-mono text-xs text-muted-foreground">{r.gstin ?? "—"}</p>
+                </div>
+                <Badge variant="secondary" className="shrink-0 rounded-full">
+                  {r.approvalStatus}
+                </Badge>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={approveMutation.isPending}
+                  onClick={() => approveMutation.mutate(r.id)}
+                >
+                  <Check className="mr-1 size-4" />
+                  Approve
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  disabled={rejectMutation.isPending}
+                  onClick={() => setRejectFor(r)}
+                >
+                  <X className="mr-1 size-4" />
+                  Reject
+                </Button>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="hidden overflow-hidden rounded-2xl border bg-card md:block">
           <Table>
             <TableHeader>
               <TableRow>

@@ -318,9 +318,9 @@ export default function DashboardPage() {
         description="Live snapshot of today’s service — orders, revenue, and floor status."
       />
 
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-black/[0.04] bg-white p-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-white/[0.06] dark:bg-white/[0.03]">
-        <div className="flex items-center gap-2">
-          <CalendarDays className="size-4 text-muted-foreground" />
+      <div className="flex flex-col gap-3 rounded-2xl border border-black/[0.04] bg-white p-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:flex-row sm:flex-wrap sm:items-center dark:border-white/[0.06] dark:bg-white/[0.03]">
+        <div className="flex min-w-0 items-center gap-2">
+          <CalendarDays className="size-4 shrink-0 text-muted-foreground" />
           <Input
             type="date"
             value={selectedDate}
@@ -329,28 +329,30 @@ export default function DashboardPage() {
               if (!e.target.value) return;
               setSelectedDate(clampDateToToday(e.target.value));
             }}
-            className="h-8 w-[170px]"
+            className="w-full sm:w-[170px]"
           />
         </div>
-        <Button
-          size="sm"
-          variant={isTodayActive ? "default" : "ghost"}
-          onClick={() => setSelectedDate(todayDateKey)}
-        >
-          Today
-        </Button>
-        <Button
-          size="sm"
-          variant={isPreviousDayActive ? "default" : "ghost"}
-          onClick={() => setSelectedDate(shiftDateKey(selectedDate, -1))}
-        >
-          Previous day
-        </Button>
-        <Button size="sm" variant="outline" onClick={refreshAll} disabled={isRefreshing}>
-          <RefreshCw className={isRefreshing ? "animate-spin" : ""} />
-          Refresh
-        </Button>
-        <Badge variant="outline" className="ml-auto">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+          <Button
+            size="sm"
+            variant={isTodayActive ? "default" : "ghost"}
+            onClick={() => setSelectedDate(todayDateKey)}
+          >
+            Today
+          </Button>
+          <Button
+            size="sm"
+            variant={isPreviousDayActive ? "default" : "ghost"}
+            onClick={() => setSelectedDate(shiftDateKey(selectedDate, -1))}
+          >
+            Previous day
+          </Button>
+          <Button size="sm" variant="outline" className="col-span-2 sm:col-span-1" onClick={refreshAll} disabled={isRefreshing}>
+            <RefreshCw className={isRefreshing ? "animate-spin" : ""} />
+            Refresh
+          </Button>
+        </div>
+        <Badge variant="outline" className="w-full justify-center sm:ml-auto sm:w-auto">
           {lastSyncedAt
             ? `Last synced ${formatIstTime(lastSyncedAt)}`
             : "Syncing..."}
@@ -367,7 +369,7 @@ export default function DashboardPage() {
         loadingSkeleton={<OrderGridSkeleton />}
         className="space-y-12"
       >
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-6">
           <StatCard
             label="Orders today"
             value={`${ordersToday}`}
@@ -442,7 +444,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
-          <div className="flex min-h-[420px] flex-col overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-white/[0.06] dark:bg-white/[0.03] lg:min-h-[480px]">
+          <div className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-white/[0.06] dark:bg-white/[0.03] lg:min-h-[480px]">
             <div className="shrink-0 px-6 pt-6 pb-4">
               <SectionHeader
                 title="Live orders"
@@ -461,8 +463,8 @@ export default function DashboardPage() {
               {orders.length === 0 ? (
                 <p className="py-8 text-center text-sm text-muted-foreground">No active orders</p>
               ) : (
-                <div className="grid max-h-[320px] min-h-0 gap-4 overflow-y-auto md:grid-cols-2">
-                  {orders.map((o) => (
+                <div className="grid min-h-0 gap-4 md:max-h-[320px] md:grid-cols-2 md:overflow-y-auto">
+                  {orders.slice(0, 6).map((o) => (
                     <Link key={o.id} href="/orders" className="block">
                       <OrderCard order={o} compact />
                     </Link>
@@ -472,7 +474,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex min-h-[420px] flex-col overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-white/[0.06] dark:bg-white/[0.03] lg:min-h-[480px]">
+          <div className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-white/[0.06] dark:bg-white/[0.03] lg:min-h-[480px]">
             <div className="shrink-0 px-6 pt-6 pb-4">
               <SectionHeader
                 title="Room status"

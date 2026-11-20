@@ -96,7 +96,7 @@ export function TableCard({
               onValueChange={(v) => onAssign(table.id, v === "unassigned" ? null : v)}
               disabled={isAssigning}
             >
-              <SelectTrigger className="h-8 text-sm">
+              <SelectTrigger className="h-11 w-full text-base md:h-8 md:text-sm">
                 <SelectValue placeholder="Unassigned">
                   {(value) => {
                     if (value === "unassigned" || value == null) return "Unassigned";

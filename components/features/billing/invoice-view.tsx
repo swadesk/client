@@ -107,7 +107,7 @@ export function InvoiceView({ order, invoice, restaurant, invoiceNumber }: Invoi
         </Button>
       </div>
 
-      <div className="mx-auto max-w-xl space-y-8 px-6 py-8">
+      <div className="mx-auto max-w-xl space-y-6 px-1 py-4 sm:space-y-8 sm:px-6 sm:py-8">
         <header className="border-b border-black/10 pb-6">
           <h1 className="text-2xl font-bold tracking-tight">{restaurant.name}</h1>
           {restaurant.address && (
@@ -118,14 +118,14 @@ export function InvoiceView({ order, invoice, restaurant, invoiceNumber }: Invoi
           )}
         </header>
 
-        <div className="flex justify-between text-sm">
+        <div className="flex flex-col gap-3 text-sm sm:flex-row sm:justify-between">
           <div>
             <div className="font-semibold text-black/70">Invoice</div>
             <div className="mt-1 font-mono font-semibold">{invNum}</div>
           </div>
-          <div className="text-right">
+          <div className="sm:text-right">
             <div className="font-semibold text-black/70">Channel</div>
-            <div className="mt-1 flex items-center justify-end gap-2 font-semibold">
+            <div className="mt-1 flex flex-wrap items-center gap-2 font-semibold sm:justify-end">
               <span>{channel === "TAKEAWAY" ? "Takeaway" : "Dine-in"}</span>
               {prepaid ? (
                 <span
@@ -142,7 +142,7 @@ export function InvoiceView({ order, invoice, restaurant, invoiceNumber }: Invoi
           </div>
         </div>
 
-        <div className="flex justify-between text-sm">
+        <div className="flex flex-col gap-3 text-sm sm:flex-row sm:justify-between">
           <div>
             <div className="font-semibold text-black/70">
               {channel === "TAKEAWAY" ? "Customer" : "Table"}
@@ -156,13 +156,13 @@ export function InvoiceView({ order, invoice, restaurant, invoiceNumber }: Invoi
             </div>
           </div>
           {channel === "TAKEAWAY" && customerPhone ? (
-            <div className="text-right">
+            <div className="sm:text-right">
               <div className="font-semibold text-black/70">Phone</div>
               <div className="mt-1 font-semibold">{customerPhone}</div>
             </div>
           ) : null}
           {channel !== "TAKEAWAY" ? (
-            <div className="text-right">
+            <div className="sm:text-right">
               <div className="font-semibold text-black/70">Order</div>
               <div className="mt-1 font-semibold">#{orderIdLabel.slice(-8).toUpperCase()}</div>
             </div>
@@ -186,10 +186,11 @@ export function InvoiceView({ order, invoice, restaurant, invoiceNumber }: Invoi
           Date: {format(new Date(createdAt), "dd MMM yyyy, HH:mm")}
         </div>
 
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[16rem] text-xs sm:text-sm">
           <thead>
             <tr className="border-b border-black/20 text-left font-semibold">
-              <th className="py-2">Item</th>
+              <th className="py-2 pr-2">Item</th>
               <th className="py-2 text-right">Qty</th>
               <th className="py-2 text-right">Rate</th>
               <th className="py-2 text-right">Amount</th>
@@ -198,7 +199,7 @@ export function InvoiceView({ order, invoice, restaurant, invoiceNumber }: Invoi
           <tbody>
             {lineItems.map((it) => (
               <tr key={it.id} className="border-b border-black/5">
-                <td className="py-2">{it.name}</td>
+                <td className="py-2 pr-2 break-words">{it.name}</td>
                 <td className="py-2 text-right tabular-nums">{it.qty}</td>
                 <td className="py-2 text-right tabular-nums">
                   {formatMoneyFromCents(it.rateCents)}
@@ -210,6 +211,7 @@ export function InvoiceView({ order, invoice, restaurant, invoiceNumber }: Invoi
             ))}
           </tbody>
         </table>
+        </div>
 
         <div className="space-y-2 border-t border-black/10 pt-4 text-sm">
           <div className="flex justify-between">

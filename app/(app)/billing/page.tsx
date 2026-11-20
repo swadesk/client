@@ -171,9 +171,9 @@ export default function BillingPage() {
           <CardTitle>Filters</CardTitle>
           <CardDescription>Narrow billing records by status, channel, and date.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-4">
+        <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <Select value={status} onValueChange={(v) => setStatus(v as typeof status)}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -184,7 +184,7 @@ export default function BillingPage() {
             </SelectContent>
           </Select>
           <Select value={channel} onValueChange={(v) => setChannel(v as typeof channel)}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Channel" />
             </SelectTrigger>
             <SelectContent>
@@ -280,7 +280,7 @@ export default function BillingPage() {
                     restaurantId={restaurantId}
                     invoiceId={inv?.id ?? null}
                   />
-                  <div className="flex flex-wrap gap-2 pt-1">
+                  <div className="grid grid-cols-1 gap-2 pt-1 sm:flex sm:flex-wrap [&>button]:w-full sm:[&>button]:w-auto">
                     {inv ? (
                       <Button variant="outline" size="sm" onClick={() => setSelectedInvoiceId(inv.id)}>
                         <FileText className="mr-2 size-4" />

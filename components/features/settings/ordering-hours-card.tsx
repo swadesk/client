@@ -189,21 +189,21 @@ export function OrderingHoursCard({
                       <span className="text-sm font-medium">{label}</span>
                       <Switch checked={open} onCheckedChange={(v) => setDayOpen(key, v)} />
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
                       <Input
                         type="time"
                         disabled={!open}
                         value={interval.start}
                         onChange={(e) => setDayTime(key, "start", e.target.value)}
-                        className="w-[8.5rem]"
+                        className="min-w-0 flex-1"
                       />
-                      <span className="text-xs text-muted-foreground">to</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">to</span>
                       <Input
                         type="time"
                         disabled={!open}
                         value={interval.end}
                         onChange={(e) => setDayTime(key, "end", e.target.value)}
-                        className="w-[8.5rem]"
+                        className="min-w-0 flex-1"
                       />
                     </div>
                   </div>
@@ -214,7 +214,7 @@ export function OrderingHoursCard({
         ) : null}
 
         <div className="flex justify-end">
-          <Button type="button" onClick={handleSave} disabled={saving}>
+          <Button type="button" className="w-full sm:w-auto" onClick={handleSave} disabled={saving}>
             {saving ? "Saving…" : "Save hours"}
           </Button>
         </div>

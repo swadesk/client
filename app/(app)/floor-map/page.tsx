@@ -79,11 +79,11 @@ function SummaryCard({
         : "bg-white text-foreground dark:bg-white/[0.03]";
 
   return (
-    <div className={cn("rounded-2xl border border-black/[0.04] p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-white/[0.06]", toneClass)}>
-      <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+    <div className={cn("rounded-2xl border border-black/[0.04] p-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-5 dark:border-white/[0.06]", toneClass)}>
+      <div className="text-[10px] font-medium uppercase leading-tight tracking-wide text-muted-foreground sm:text-xs sm:tracking-[0.18em]">
         {label}
       </div>
-      <div className="mt-2 text-3xl font-semibold tracking-tight">{value}</div>
+      <div className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">{value}</div>
     </div>
   );
 }
@@ -162,7 +162,7 @@ export default function FloorMapPage() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-6">
         <SummaryCard label="Occupancy" value={`${occupancy}%`} />
         <SummaryCard label="Active rooms" value={`${activeCount}`} tone="amber" />
         <SummaryCard label="Billing now" value={`${billingCount}`} tone="blue" />
@@ -187,7 +187,7 @@ export default function FloorMapPage() {
         }
       >
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="overflow-hidden rounded-2xl border border-black/[0.04] bg-white p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-white/[0.06] dark:bg-white/[0.03]">
+          <div className="overflow-hidden rounded-2xl border border-black/[0.04] bg-white p-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-6 dark:border-white/[0.06] dark:bg-white/[0.03]">
             <div className="flex flex-col gap-6">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
@@ -196,12 +196,12 @@ export default function FloorMapPage() {
                     Scan active tables fast and jump into management with one tap.
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                   {(["All", "Available", "Occupied", "Billing"] as const).map((item) => (
                     <Button
                       key={item}
                       variant={filter === item ? "default" : "secondary"}
-                      className={cn(filter === item && "shadow-sm")}
+                      className={cn("min-h-11", filter === item && "shadow-sm")}
                       onClick={() => setFilter(item)}
                     >
                       {item}

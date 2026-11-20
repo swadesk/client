@@ -31,10 +31,10 @@ export function DayWiseSegregationChart({ data }: { data: DaySegRow[] }) {
   return (
     <div className="h-72">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ left: 8, right: 8, top: 8, bottom: 0 }}>
+        <BarChart data={data} margin={{ left: 0, right: 4, top: 8, bottom: 8 }}>
           <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
-          <XAxis dataKey="date" tickLine={false} axisLine={false} />
-          <YAxis tickLine={false} axisLine={false} width={40} />
+          <XAxis dataKey="date" tickLine={false} axisLine={false} minTickGap={20} tick={{ fontSize: 10 }} />
+          <YAxis tickLine={false} axisLine={false} width={28} tick={{ fontSize: 11 }} />
           <Tooltip
             content={({ active, payload, label }) => {
               if (!active || !payload?.length) return null;

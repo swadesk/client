@@ -74,7 +74,22 @@ function RestaurantStaffSection({ restaurantId }: { restaurantId: string }) {
         <div className="border-b px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Login Members ({members.length})
         </div>
-        <div className="max-h-64 overflow-auto">
+        <div className="space-y-2 p-3 md:hidden">
+          {members.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No login members.</p>
+          ) : (
+            members.map((m: SuperAdminMemberRow) => (
+              <div key={m.userId} className="rounded-lg border px-3 py-2">
+                <div className="font-medium">{m.name}</div>
+                <div className="break-all text-xs text-muted-foreground">{m.email}</div>
+                <Badge variant="secondary" className="mt-1 rounded-full">
+                  {m.role}
+                </Badge>
+              </div>
+            ))
+          )}
+        </div>
+        <div className="hidden max-h-64 overflow-auto md:block">
           <Table>
             <TableHeader>
               <TableRow>
@@ -104,7 +119,24 @@ function RestaurantStaffSection({ restaurantId }: { restaurantId: string }) {
         <div className="border-b px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Floor Waiters ({waiters.length})
         </div>
-        <div className="max-h-64 overflow-auto">
+        <div className="space-y-2 p-3 md:hidden">
+          {waiters.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No floor waiters.</p>
+          ) : (
+            waiters.map((w: Waiter) => (
+              <div key={w.id} className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
+                <div className="min-w-0">
+                  <div className="truncate font-medium">{w.name}</div>
+                  <div className="text-xs text-muted-foreground">{w.role}</div>
+                </div>
+                <Badge variant="secondary" className="shrink-0 rounded-full">
+                  {w.status}
+                </Badge>
+              </div>
+            ))
+          )}
+        </div>
+        <div className="hidden max-h-64 overflow-auto md:block">
           <Table>
             <TableHeader>
               <TableRow>
@@ -191,27 +223,27 @@ export default function SuperAdminPage() {
         description="Platform-wide operational visibility for restaurants, approvals, and permissions."
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <div className="rounded-2xl border bg-card p-4">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+          <div className="flex items-start gap-1.5 text-[10px] uppercase leading-tight tracking-wide text-muted-foreground sm:items-center sm:gap-2 sm:text-xs">
             <Building2 className="size-4" />
             Restaurants
           </div>
-          <div className="mt-2 text-2xl font-semibold">{restaurants.length}</div>
+          <div className="mt-2 text-xl font-semibold sm:text-2xl">{restaurants.length}</div>
         </div>
         <div className="rounded-2xl border bg-card p-4">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+          <div className="flex items-start gap-1.5 text-[10px] uppercase leading-tight tracking-wide text-muted-foreground sm:items-center sm:gap-2 sm:text-xs">
             <Shield className="size-4" />
             Pending
           </div>
-          <div className="mt-2 text-2xl font-semibold">{pendingCount}</div>
+          <div className="mt-2 text-xl font-semibold sm:text-2xl">{pendingCount}</div>
         </div>
         <div className="rounded-2xl border bg-card p-4">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+          <div className="flex items-start gap-1.5 text-[10px] uppercase leading-tight tracking-wide text-muted-foreground sm:items-center sm:gap-2 sm:text-xs">
             <Users className="size-4" />
             Active / Rejected
           </div>
-          <div className="mt-2 text-2xl font-semibold">
+          <div className="mt-2 text-xl font-semibold sm:text-2xl">
             {activeCount} / {rejectedCount}
           </div>
         </div>
@@ -232,7 +264,44 @@ export default function SuperAdminPage() {
           />
         }
       >
-        <div className="overflow-hidden rounded-2xl border bg-card">
+        <div className="space-y-3 md:hidden">
+          {restaurants.map((r) => (
+            <article key={r.id} className="rounded-2xl border bg-card p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="font-medium">{r.name}</h3>
+                  <p className="mt-1 break-all font-mono text-xs text-muted-foreground">{r.gstin ?? "—"}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{r.address ?? "—"}</p>
+                </div>
+                <Badge
+                  variant="secondary"
+                  className={cn(
+                    "shrink-0 rounded-full",
+                    r.approvalStatus === "PendingApproval" && "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+                    r.approvalStatus === "Active" && "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+                    r.approvalStatus === "Rejected" && "bg-red-500/15 text-red-700 dark:text-red-300",
+                  )}
+                >
+                  {r.approvalStatus}
+                </Badge>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-3 w-full rounded-lg"
+                onClick={() => setOpenRestaurantId((prev) => (prev === r.id ? null : r.id))}
+              >
+                {openRestaurantId === r.id ? "Hide staff" : "View staff"}
+              </Button>
+              {openRestaurantId === r.id ? (
+                <div className="mt-3">
+                  <RestaurantStaffSection restaurantId={r.id} />
+                </div>
+              ) : null}
+            </article>
+          ))}
+        </div>
+        <div className="hidden overflow-hidden rounded-2xl border bg-card md:block">
           <Table>
             <TableHeader>
               <TableRow>
@@ -349,7 +418,34 @@ export default function SuperAdminPage() {
             />
           }
         >
-          <div className="overflow-hidden rounded-xl border">
+          <div className="space-y-3 md:hidden">
+            {allUsers.map((u: SuperAdminUserListItem) => (
+              <article key={u.id} className="rounded-xl border p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-medium">{u.name}</p>
+                    <p className="break-all text-xs text-muted-foreground">{u.email}</p>
+                  </div>
+                  <Badge variant="secondary" className="shrink-0 rounded-full">
+                    {u.globalRole}
+                  </Badge>
+                </div>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  {u.memberships.length === 0
+                    ? "No memberships"
+                    : u.memberships
+                        .slice(0, 2)
+                        .map((m) => `${m.restaurantName} · ${m.role}`)
+                        .join(", ")}
+                  {u.memberships.length > 2 ? ` +${u.memberships.length - 2} more` : ""}
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Updated {new Date(u.updatedAt).toLocaleString()}
+                </p>
+              </article>
+            ))}
+          </div>
+          <div className="hidden overflow-hidden rounded-xl border md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -396,12 +492,12 @@ export default function SuperAdminPage() {
           </div>
 
           {usersPayload ? (
-            <div className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
+            <div className="flex flex-col gap-3 pt-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
               <div>
                 Showing {usersPayload.offset + 1}-{Math.min(usersPayload.offset + usersPayload.limit, usersPayload.total)} of{" "}
                 {usersPayload.total}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
                 <Button
                   size="sm"
                   variant="outline"

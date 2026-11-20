@@ -317,7 +317,7 @@ export default function MenuPage() {
         <div
           className="flex min-h-[min(360px,50vh)] flex-col overflow-hidden rounded-2xl border border-black/[0.04] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:border-white/[0.06] dark:bg-white/[0.03] lg:h-full lg:min-h-0"
         >
-          <div className="shrink-0 p-6 pb-4">
+          <div className="shrink-0 p-4 pb-3 sm:p-6 sm:pb-4">
             <SectionHeader
               title={categories.find((c) => c.id === activeCategoryId)?.name ?? "Items"}
               right={
@@ -327,7 +327,7 @@ export default function MenuPage() {
               }
             />
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 sm:px-6 sm:pb-6">
             <QueryState
               isLoading={isLoading}
               isError={isError}

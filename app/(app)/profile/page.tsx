@@ -156,7 +156,7 @@ export default function ProfilePage() {
               </Badge>
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5">
+              <span className="inline-flex min-w-0 items-center gap-1.5 break-all">
                 <Mail className="size-3.5 shrink-0 opacity-70" />
                 {user.email}
               </span>
@@ -209,7 +209,7 @@ export default function ProfilePage() {
             onFileChange={setPhotoFile}
           />
           <div className="flex justify-end border-t border-border/60 pt-4">
-            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !name.trim()}>
+            <Button className="w-full sm:w-auto" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !name.trim()}>
               {saveMutation.isPending ? "Saving…" : "Save personal details"}
             </Button>
           </div>
@@ -238,6 +238,7 @@ export default function ProfilePage() {
             />
             <div className="flex justify-end border-t border-border/60 pt-4">
               <Button
+                className="w-full sm:w-auto"
                 onClick={() => saveRestaurantLogoMutation.mutate()}
                 disabled={saveRestaurantLogoMutation.isPending || !restaurantLogoFile || !restaurantId}
               >

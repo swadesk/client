@@ -159,7 +159,7 @@ export function OrderNotificationBell() {
       }}
     >
       <DropdownMenuTrigger
-        className="relative inline-flex size-9 items-center justify-center rounded-xl hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="relative inline-flex size-11 items-center justify-center rounded-xl hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:size-9"
         aria-label="Order notifications"
       >
         <Bell className="size-4" />
@@ -167,7 +167,7 @@ export function OrderNotificationBell() {
           <span className="absolute right-1.5 top-1.5 inline-flex size-2 rounded-full bg-red-500" />
         ) : null}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72 rounded-xl">
+      <DropdownMenuContent align="end" className="w-[min(18rem,calc(100vw-1rem))] rounded-xl">
         <DropdownMenuGroup>
           <DropdownMenuLabel>Order notifications</DropdownMenuLabel>
           <DropdownMenuSeparator />

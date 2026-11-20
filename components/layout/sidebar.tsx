@@ -100,7 +100,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               href={item.href}
               onClick={handleNav}
               className={cn(
-                "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+                "group flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all",
                 active
                   ? showSuperAdmin
                     ? "bg-amber-500/20 text-amber-100 shadow-md ring-1 ring-amber-400/30"
@@ -151,7 +151,7 @@ export function Sidebar({
         <SidebarContent />
       </aside>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="left" className="w-[min(288px,100vw-1rem)] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground sm:w-72">
+        <SheetContent side="left" className="w-[min(20rem,calc(100vw-0.75rem))] border-sidebar-border bg-sidebar p-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] text-sidebar-foreground sm:w-72">
           <SidebarContent onNavigate={() => onOpenChange(false)} />
         </SheetContent>
       </Sheet>

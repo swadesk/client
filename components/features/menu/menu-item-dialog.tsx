@@ -137,6 +137,7 @@ export function MenuItemDialog({
             label="Image"
             description="Optional. JPEG, PNG, WebP, or GIF — max 5 MB. Sent with save (multipart field image)."
             existingUrl={safeForm.imageUrl}
+            photoName={safeForm.name}
             imageFile={safeForm.imageFile}
             onFileChange={(imageFile) => onFormChange({ imageFile })}
             disabled={!canUploadImage}

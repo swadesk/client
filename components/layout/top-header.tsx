@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { ChevronDown, Moon, Sun } from "lucide-react";
-import { SidebarTrigger } from "@/components/layout/sidebar";
 import { useActiveRestaurant, useRestaurantStore } from "@/store/restaurant-store";
 import { VenueLogoMark } from "@/components/branding/venue-branding-logo";
 import { cn } from "@/lib/utils";
@@ -44,11 +43,7 @@ function StaffBreakBadge({ userId }: { userId: string }) {
   );
 }
 
-export function TopHeader({
-  onOpenSidebar,
-}: {
-  onOpenSidebar: () => void;
-}) {
+export function TopHeader() {
   const router = useRouter();
   const active = useActiveRestaurant();
   const { restaurants, activeRestaurantId, setActiveRestaurantId } =
@@ -64,16 +59,14 @@ export function TopHeader({
     user?.role === "Waiter" || user?.role === "Manager" || user?.role === "Kitchen";
 
   return (
-    <header className="sticky top-0 z-30 shrink-0 border-b border-border/70 bg-background/95 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
-      <div className="flex h-14 items-center gap-2 px-3 sm:gap-3 sm:px-4 md:px-8">
-        <SidebarTrigger onClick={onOpenSidebar} />
-
+    <header className="sticky top-0 z-30 shrink-0 border-b border-border/70 bg-background/95 pt-[env(safe-area-inset-top)] shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
+      <div className="flex h-14 items-center gap-1 px-2 sm:gap-3 sm:px-4 md:px-8">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger
                 className={cn(
-                  "inline-flex h-10 min-w-0 max-w-[min(100%,calc(100vw-8rem))] items-center justify-start gap-2 rounded-xl border border-border/80 bg-card px-3 text-left text-sm font-semibold shadow-sm outline-none transition-colors hover:bg-accent/60 hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  "inline-flex h-11 min-w-0 w-full max-w-full items-center justify-start gap-2 rounded-xl border border-border/80 bg-card px-2.5 text-left text-sm font-semibold shadow-sm outline-none transition-colors hover:bg-accent/60 hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:h-10 md:w-auto md:max-w-[min(100%,20rem)] md:px-3",
                 )}
               >
                 <VenueLogoMark logoUrl={active?.logoUrl} size={28} alt="" />
@@ -82,7 +75,7 @@ export function TopHeader({
                 </span>
                 <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-72 rounded-xl">
+              <DropdownMenuContent align="start" className="w-[min(18rem,calc(100vw-1rem))] rounded-xl">
                 <DropdownMenuGroup>
                   <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Your restaurants
@@ -111,7 +104,7 @@ export function TopHeader({
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-xl"
+          className="hidden rounded-xl md:inline-flex"
           onClick={() => setTheme(isDark ? "light" : "dark")}
           aria-label="Toggle theme"
         >
@@ -137,7 +130,7 @@ export function TopHeader({
         ) : null}
 
         <DropdownMenu>
-          <DropdownMenuTrigger className="inline-flex h-10 max-w-[min(100%,14rem)] items-center gap-2 rounded-xl border border-transparent px-2 text-sm font-medium outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+          <DropdownMenuTrigger className="inline-flex size-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-transparent text-sm font-medium outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:h-10 md:w-auto md:max-w-[14rem] md:justify-start md:px-2">
             <Avatar className="size-8 ring-2 ring-primary/15">
               {user?.photoUrl ? (
                 <AvatarImage
@@ -163,15 +156,19 @@ export function TopHeader({
                 </Badge>
               ) : null}
             </span>
-            <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+            <ChevronDown className="hidden size-4 shrink-0 text-muted-foreground md:block" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52 rounded-xl">
+          <DropdownMenuContent align="end" className="w-[min(16rem,calc(100vw-1rem))] rounded-xl">
             <DropdownMenuGroup>
               <DropdownMenuLabel>Account</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => router.push("/profile")}>Profile</DropdownMenuItem>
               {canManageTeam ? (
                 <DropdownMenuItem onClick={() => router.push("/waiters")}>Team</DropdownMenuItem>
               ) : null}
+              <DropdownMenuItem onClick={() => setTheme(isDark ? "light" : "dark")} className="md:hidden">
+                {isDark ? <Sun /> : <Moon />}
+                {isDark ? "Light mode" : "Dark mode"}
+              </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>

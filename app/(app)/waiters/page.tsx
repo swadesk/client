@@ -290,7 +290,7 @@ function WaiterCard({
               <SelectTrigger
                 id={`status-${waiter.id}`}
                 className={cn(
-                  "h-8 w-[120px] shrink-0 font-medium text-xs sm:h-7",
+                  "h-11 w-full shrink-0 font-medium text-base sm:h-7 sm:w-[120px] sm:text-xs",
                   colors.bg,
                   colors.border,
                   colors.text,
@@ -363,14 +363,14 @@ function SummaryCard({
   return (
     <div
       className={cn(
-        "rounded-2xl border p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-none",
+        "rounded-2xl border p-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-5 dark:shadow-none",
         toneClass,
       )}
     >
-      <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+      <div className="text-[10px] font-medium uppercase leading-tight tracking-wide text-muted-foreground sm:text-xs sm:tracking-[0.18em]">
         {label}
       </div>
-      <div className="mt-2 text-3xl font-semibold tabular-nums tracking-tight">{value}</div>
+      <div className="mt-2 text-2xl font-semibold tabular-nums tracking-tight sm:text-3xl">{value}</div>
     </div>
   );
 }
@@ -687,7 +687,7 @@ export default function WaitersPage() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6">
         <SummaryCard label="Active now" value={`${activeCount}`} tone="green" />
         <SummaryCard label="On break" value={`${breakCount}`} tone="amber" />
         <SummaryCard label="Assigned tables" value={`${totalAssignedTables}`} tone="blue" />

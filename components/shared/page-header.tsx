@@ -22,7 +22,7 @@ export function PageHeader({
       )}
     >
       <div className="min-w-0 flex-1 space-y-1.5">
-        <h1 className="text-balance text-2xl font-medium tracking-tight text-foreground sm:text-[1.75rem]">
+        <h1 className="text-balance text-xl font-semibold tracking-tight text-foreground sm:text-[1.75rem] sm:font-medium">
           {title}
         </h1>
         {description ? (
@@ -32,7 +32,7 @@ export function PageHeader({
         ) : null}
       </div>
       {actions ? (
-        <div className={cn("flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto")}>
+        <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center [&>button]:w-full sm:[&>button]:w-auto">
           {actions}
         </div>
       ) : null}

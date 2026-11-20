@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { useRestaurantStore } from "@/store/restaurant-store";
 import { useAuthStore } from "@/store/auth-store";
 import { Sidebar } from "@/components/layout/sidebar";
+import { MobileNav } from "@/components/layout/mobile-nav";
 import { TopHeader } from "@/components/layout/top-header";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -41,17 +42,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [restaurants, setRestaurants]);
 
   return (
-    <div className="min-h-dvh bg-[hsl(220_14%_96%)] dark:bg-[hsl(222_30%_7%)]">
+    <div
+      data-app-shell
+      className="min-h-dvh overflow-x-clip bg-[hsl(220_14%_96%)] dark:bg-[hsl(222_30%_7%)]"
+    >
       <Sidebar open={sidebarOpen} onOpenChange={setSidebarOpen} />
       {/* Main column: offset for fixed sidebar on md+; scrolls independently */}
       <div className="flex h-dvh min-h-0 flex-col md:pl-72">
-        <TopHeader onOpenSidebar={() => setSidebarOpen(true)} />
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
-          <div className="mx-auto min-w-0 w-full max-w-[1600px] space-y-8 px-3 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6 md:px-8 lg:px-10">
+        <TopHeader />
+        <main
+          data-app-main
+          className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
+        >
+          <div className="mx-auto min-w-0 w-full max-w-[1600px] space-y-6 px-3 py-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))] sm:space-y-8 sm:px-6 sm:py-6 md:px-8 md:pb-[max(1.5rem,env(safe-area-inset-bottom))] lg:px-10">
             {children}
           </div>
         </main>
       </div>
+      <MobileNav onOpenMore={() => setSidebarOpen(true)} />
     </div>
   );
 }

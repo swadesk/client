@@ -5,6 +5,9 @@ import { ImageIcon, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { menuPhotoChain } from "@/lib/dish-photos";
+import { MENU_IMAGE_FALLBACK } from "@/lib/menu-images";
+import { resolveMediaUrl } from "@/lib/media-url";
 import { cn } from "@/lib/utils";
 
 const ACCEPT = "image/jpeg,image/png,image/webp,image/gif";
@@ -20,6 +23,8 @@ type ImageAttachmentFieldProps = {
   onFileChange: (file: File | null) => void;
   disabled?: boolean;
   previewClassName?: string;
+  /** Dish name. Used to show the bundled photo when the saved upload URL is missing. */
+  photoName?: string;
 };
 
 /**
@@ -33,9 +38,11 @@ export function ImageAttachmentField({
   onFileChange,
   disabled = false,
   previewClassName,
+  photoName,
 }: ImageAttachmentFieldProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [objectUrl, setObjectUrl] = React.useState<string | null>(null);
+  const [step, setStep] = React.useState(0);
 
   React.useEffect(() => {
     if (!imageFile) {
@@ -47,7 +54,18 @@ export function ImageAttachmentField({
     return () => URL.revokeObjectURL(u);
   }, [imageFile]);
 
-  const displaySrc = objectUrl || (existingUrl ?? "").trim();
+  const chain = React.useMemo(() => {
+    const remote = objectUrl || resolveMediaUrl(existingUrl);
+    const photos = menuPhotoChain({ remote, name: photoName });
+    if (photos.length === 0) return photos;
+    return photos.includes(MENU_IMAGE_FALLBACK) ? photos : [...photos, MENU_IMAGE_FALLBACK];
+  }, [objectUrl, existingUrl, photoName]);
+
+  React.useEffect(() => {
+    setStep(0);
+  }, [chain]);
+
+  const displaySrc = chain[Math.min(step, Math.max(chain.length - 1, 0))] || "";
 
   function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -91,8 +109,11 @@ export function ImageAttachmentField({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={displaySrc}
-                alt=""
+                alt={photoName || ""}
                 className="max-h-[140px] w-full max-w-full object-contain"
+                onError={() =>
+                  setStep((current) => (current + 1 < chain.length ? current + 1 : current))
+                }
               />
               {imageFile ? (
                 <Button

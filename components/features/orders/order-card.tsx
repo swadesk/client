@@ -227,7 +227,7 @@ export function OrderCard({
         ) : null}
       </CardContent>
       {onMarkPreparing || onMarkReady || onMarkComplete || onDelete ? (
-        <CardFooter className="flex flex-col flex-wrap gap-2 sm:flex-row sm:justify-end">
+        <CardFooter className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end [&>button]:w-full sm:[&>button]:w-auto">
           {order.status === "Pending" && onMarkPreparing ? (
             <Button size="sm" variant="secondary" onClick={() => onMarkPreparing(order.id)}>
               Mark preparing

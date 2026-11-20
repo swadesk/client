@@ -231,6 +231,7 @@ export function KitchenBoard({
   onOrderDelete?: (orderId: string) => void;
 }) {
   const [activeId, setActiveId] = React.useState<string | null>(null);
+  const [mobileColumn, setMobileColumn] = React.useState<KanbanStatus>("Pending");
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -309,11 +310,37 @@ export function KitchenBoard({
       onDragCancel={handleDragCancel}
       collisionDetection={kitchenCollisionDetection}
     >
-      <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-2 lg:grid lg:grid-cols-3 lg:overflow-visible lg:pb-0">
+      <div className="mb-3 grid grid-cols-3 gap-2 lg:hidden">
+        {COLUMNS.map((col) => {
+          const count =
+            col.id === "Pending" ? pending.length : col.id === "Preparing" ? preparing.length : ready.length;
+          const selected = mobileColumn === col.id;
+          return (
+            <button
+              key={col.id}
+              type="button"
+              onClick={() => setMobileColumn(col.id)}
+              aria-pressed={selected}
+              className={cn(
+                "min-h-11 touch-manipulation rounded-xl border px-2 py-2 text-center",
+                selected
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card text-foreground",
+              )}
+            >
+              <span className="block text-xs font-semibold">{col.title}</span>
+              <span className={cn("mt-0.5 block text-[11px] font-medium", selected ? "text-primary-foreground/80" : "text-muted-foreground")}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {COLUMNS.map((col) => (
           <div
             key={col.id}
-            className="min-w-[85vw] shrink-0 snap-center sm:min-w-[320px] lg:min-w-0 lg:shrink"
+            className={cn("min-w-0", mobileColumn === col.id ? "block" : "hidden lg:block")}
           >
             <KitchenColumn
               id={col.id}

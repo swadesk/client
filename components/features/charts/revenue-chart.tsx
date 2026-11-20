@@ -28,10 +28,10 @@ export function RevenueChart({
   return (
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ left: 8, right: 8, top: 8, bottom: 0 }}>
+        <LineChart data={data} margin={{ left: 0, right: 4, top: 8, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" opacity={0.25} />
-          <XAxis dataKey="day" tickLine={false} axisLine={false} />
-          <YAxis tickLine={false} axisLine={false} width={44} tickFormatter={(v) => `₹${v}`} />
+          <XAxis dataKey="day" tickLine={false} axisLine={false} minTickGap={24} tick={{ fontSize: 11 }} />
+          <YAxis tickLine={false} axisLine={false} width={36} tick={{ fontSize: 10 }} tickFormatter={(v) => `₹${v}`} />
           <Tooltip
             content={({ active, payload }) => {
               if (!active || !payload?.length) return null;
