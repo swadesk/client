@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { normalizeAdminMenuPayload } from "@/lib/menu-normalize";
 import { filterCategoriesForQrMenu, filterItemsForQrMenu } from "@/lib/qr-menu-guest";
 import { qrThemeFromHex, qrThemeFromLogoUrl, type QrVenueThemeCssVars } from "@/lib/qr-venue-theme";
-import { Clock3, MapPin, UtensilsCrossed } from "lucide-react";
+import { Clock3, MapPin } from "lucide-react";
 
 type QrTableOption = {
   id: string;
@@ -86,6 +86,34 @@ function parseTableOptions(payload: unknown): QrTableOption[] {
       return { id, label: String(labelText), tableCode };
     })
     .filter((v): v is QrTableOption => Boolean(v));
+}
+
+function QrMenuTopBar({
+  restaurantName,
+  venueLogoUrl,
+  location,
+}: {
+  restaurantName: string;
+  venueLogoUrl?: string | null;
+  location?: React.ReactNode;
+}) {
+  return (
+    <div className="mx-auto flex h-11 max-w-lg items-center gap-2 px-3 sm:px-4">
+      <div className="flex h-7 max-w-[6.5rem] shrink-0 items-center">
+        <VenueBrandingLogo
+          logoUrl={venueLogoUrl}
+          height={28}
+          compact
+          className="!h-7 !max-h-7 !w-auto !max-w-[6.5rem] object-contain object-left"
+          alt={`${restaurantName} logo`}
+        />
+      </div>
+      <h1 className="min-w-0 flex-1 truncate text-sm font-semibold leading-none tracking-tight text-foreground">
+        {restaurantName}
+      </h1>
+      {location}
+    </div>
+  );
 }
 
 function isLocalDevHost(hostname: string): boolean {
@@ -258,8 +286,31 @@ function QrMenuPageInner() {
   }, [categories]);
 
   const filtered = items.filter((i) => i.categoryId === activeCategoryId);
-  const activeCategoryName =
-    categories.find((c) => c.id === activeCategoryId)?.name ?? "All";
+
+  const locationControl = allowTablePicker ? (
+    <Select value={pickerTableId} onValueChange={(value) => setPickerTableId(value ?? "")}>
+      <SelectTrigger
+        size="sm"
+        aria-label="Room or table"
+        className="h-7 w-auto max-w-[7rem] shrink-0 gap-1 overflow-hidden rounded-full border-black/[0.08] bg-muted/70 px-2 text-[11px] font-semibold shadow-none dark:border-white/10 dark:bg-muted/50"
+      >
+        <MapPin className="size-3.5 shrink-0 text-primary" aria-hidden />
+        <span className="min-w-0 truncate">{selectedTableLabel}</span>
+      </SelectTrigger>
+      <SelectContent align="end">
+        {tableOptions.map((table) => (
+          <SelectItem key={table.id} value={table.id}>
+            {table.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  ) : (
+    <p className="inline-flex h-7 max-w-[7rem] shrink-0 items-center gap-1 rounded-full bg-muted/80 px-2 text-[11px] font-semibold text-foreground dark:bg-muted/50">
+      <MapPin className="size-3.5 shrink-0 text-primary" aria-hidden />
+      <span className="truncate">{selectedTableLabel}</span>
+    </p>
+  );
 
   if (!isLoading && !isError && !menuShapeInvalid && data && !acceptingOrders) {
     return (
@@ -267,18 +318,15 @@ function QrMenuPageInner() {
         className="relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background text-foreground"
         style={themeStyle}
       >
-        <div className="h-1 shrink-0 bg-gradient-to-r from-brand-navy via-primary to-brand-navy" />
-        <main className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center px-6 text-center">
-          <VenueBrandingLogo
-            logoUrl={venueLogoUrl}
-            height={52}
-            className="mx-auto max-w-[240px] drop-shadow-sm"
-            alt={`${restaurantName} logo`}
+        <header className="shrink-0 border-b border-black/[0.07] bg-background pt-[env(safe-area-inset-top)] dark:border-white/[0.09]">
+          <QrMenuTopBar
+            restaurantName={restaurantName}
+            venueLogoUrl={venueLogoUrl}
+            location={locationControl}
           />
-          <h1 className="mt-6 text-balance font-sans text-2xl font-bold tracking-tight">
-            {restaurantName}
-          </h1>
-          <div className="mt-8 w-full rounded-[1.35rem] border border-black/[0.06] bg-card/95 p-6 shadow-card ring-1 ring-primary/[0.08] dark:border-white/[0.08]">
+        </header>
+        <main className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center px-6 text-center">
+          <div className="w-full rounded-2xl border border-black/[0.06] bg-card p-6 shadow-card dark:border-white/[0.08]">
             <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted text-primary">
               <Clock3 className="size-6" strokeWidth={2.25} aria-hidden />
             </div>
@@ -297,79 +345,21 @@ function QrMenuPageInner() {
       className="relative flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background text-foreground"
       style={themeStyle}
     >
-      <div
-        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
-        aria-hidden
-      >
-        <div className="absolute -top-40 left-1/2 h-[36rem] w-[min(100%,48rem)] -translate-x-1/2 rounded-[100%] bg-primary/[0.11] blur-[72px] dark:bg-primary/[0.08]" />
-        <div className="absolute bottom-[-6rem] left-[-4rem] h-72 w-72 rounded-full bg-brand-navy/[0.06] blur-[56px] dark:bg-brand-navy/[0.12]" />
-        <div className="absolute right-[-20%] top-1/3 h-64 w-64 rounded-full bg-primary/[0.05] blur-[48px]" />
-      </div>
-
-      <div className="h-1 shrink-0 bg-gradient-to-r from-brand-navy via-primary to-brand-navy" aria-hidden />
-
-      <header className="sticky top-0 z-30 shrink-0 border-b border-black/[0.07] bg-background/80 shadow-sm backdrop-blur-xl dark:border-white/[0.09]">
-        <div className="mx-auto max-w-lg px-4 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-4">
-          <div className="relative overflow-hidden rounded-[1.35rem] border border-black/[0.06] bg-card/95 shadow-card ring-1 ring-primary/[0.08] dark:border-white/[0.08] dark:bg-card/90">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
-            <div className="p-5 sm:p-6">
-              <div className="flex justify-center">
-                <VenueBrandingLogo
-                  logoUrl={venueLogoUrl}
-                  height={52}
-                  className="mx-auto max-w-[240px] drop-shadow-sm"
-                  alt={`${restaurantName} logo`}
-                />
-              </div>
-              <p className="mt-5 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-primary/90">
-                Scan · order · enjoy
-              </p>
-              <h1 className="mt-2 text-balance text-center font-sans text-2xl font-bold tracking-tight text-foreground sm:text-[1.65rem]">
-                {restaurantName}
-              </h1>
-              <p className="mx-auto mt-2 max-w-sm text-center text-[13px] leading-relaxed text-muted-foreground">
-                Tap <span className="font-medium text-foreground/80">+</span> to add dishes. Orders go
-                to the kitchen for your table.
-              </p>
-
-              {allowTablePicker ? (
-                <div className="mt-6 rounded-2xl bg-muted/40 px-3 py-3 dark:bg-muted/25">
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    <MapPin className="size-3.5 shrink-0 text-primary" aria-hidden />
-                    Table
-                  </div>
-                  <Select
-                    value={pickerTableId}
-                    onValueChange={(value) => setPickerTableId(value ?? "")}
-                  >
-                    <SelectTrigger className="mt-2 h-11 w-full rounded-xl border-input/80 bg-background font-semibold shadow-sm">
-                      <span className="line-clamp-1 flex-1 truncate text-left text-[15px]">
-                        {selectedTableLabel}
-                      </span>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tableOptions.map((table) => (
-                        <SelectItem key={table.id} value={table.id}>
-                          {table.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </div>
-
-        <div className="mx-auto max-w-lg border-t border-black/[0.06] bg-background/60 px-0 pb-3 pt-2 dark:border-white/[0.08]">
+      <header className="z-30 shrink-0 border-b border-black/[0.07] bg-background/95 pt-[env(safe-area-inset-top)] backdrop-blur-md dark:border-white/[0.09]">
+        <QrMenuTopBar
+          restaurantName={restaurantName}
+          venueLogoUrl={venueLogoUrl}
+          location={locationControl}
+        />
+        {categories.length > 0 ? (
           <div
-            className="overflow-x-auto overscroll-x-contain px-4 py-1 [scrollbar-width:thin] [touch-action:pan-x] sm:px-5"
+            className="mx-auto max-w-lg overflow-x-auto overscroll-x-contain px-3 pb-2 [scrollbar-width:none] [touch-action:pan-x] sm:px-4 [&::-webkit-scrollbar]:hidden"
             style={{ WebkitOverflowScrolling: "touch" }}
           >
             <div
               role="tablist"
               aria-label="Menu categories"
-              className="flex w-max flex-nowrap items-stretch gap-2"
+              className="flex w-max flex-nowrap items-center gap-1.5"
             >
               {categories.map((c) => (
                 <button
@@ -378,10 +368,10 @@ function QrMenuPageInner() {
                   role="tab"
                   aria-selected={c.id === activeCategoryId}
                   className={cn(
-                    "shrink-0 rounded-full px-4 py-2.5 text-left text-xs font-semibold transition-all sm:text-[13px]",
+                    "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2",
                     c.id === activeCategoryId
-                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                      ? "bg-primary text-primary-foreground"
                       : "bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground dark:bg-muted/50",
                   )}
                   onClick={() => setActiveCategoryId(c.id)}
@@ -391,26 +381,11 @@ function QrMenuPageInner() {
               ))}
             </div>
           </div>
-        </div>
+        ) : null}
       </header>
 
-      <main className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-hidden px-4 pt-5 sm:px-5 sm:pt-6">
-        <div className="mb-4 flex shrink-0 flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2 text-primary">
-              <UtensilsCrossed className="size-4" strokeWidth={2.25} />
-              <span className="text-xs font-bold uppercase tracking-[0.12em]">On the menu</span>
-            </div>
-            <h2 className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              {activeCategoryName}
-            </h2>
-          </div>
-          <p className="text-sm font-medium tabular-nums text-muted-foreground">
-            {filtered.length} {filtered.length === 1 ? "dish" : "dishes"}
-          </p>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch] pb-[calc(6.5rem+env(safe-area-inset-bottom))] [scrollbar-width:thin]">
+      <main className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col overflow-hidden px-3 pt-2.5 sm:px-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain pb-3 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
           <QueryState
             isLoading={isLoading}
             isError={isError || menuShapeInvalid}
@@ -427,7 +402,7 @@ function QrMenuPageInner() {
               />
             }
           >
-            <div className="grid grid-cols-2 content-start gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 content-start gap-2.5 sm:gap-3">
               {filtered.map((item) => (
                 <QrMenuItemRow key={item.id} item={item} />
               ))}
@@ -436,8 +411,8 @@ function QrMenuPageInner() {
         </div>
       </main>
 
-      <div className="shrink-0 border-t border-black/[0.08] bg-background/90 backdrop-blur-xl dark:border-white/[0.09]">
-        <div className="mx-auto max-w-lg px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5">
+      <div className="shrink-0 border-t border-black/[0.08] bg-background/95 backdrop-blur-xl dark:border-white/[0.09]">
+        <div className="mx-auto max-w-lg px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:px-4">
           <CartDrawer orderingRestaurantId={restaurantId} orderingTableCode={tableCodeForOrder} />
         </div>
       </div>
@@ -448,8 +423,8 @@ function QrMenuPageInner() {
 function QrMenuSuspenseFallback() {
   return (
     <div className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background">
-      <div className="h-1 shrink-0 bg-gradient-to-r from-brand-navy via-primary to-brand-navy" />
-      <div className="mx-auto w-full max-w-lg flex-1 px-4 pt-8 sm:px-5">
+      <div className="h-12 shrink-0 border-b border-black/[0.07] bg-background dark:border-white/[0.09]" />
+      <div className="mx-auto min-h-0 w-full max-w-lg flex-1 overflow-hidden px-3 pt-2.5 sm:px-4">
         <QrMenuSkeleton />
       </div>
     </div>

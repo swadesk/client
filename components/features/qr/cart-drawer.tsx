@@ -149,7 +149,7 @@ export function CartDrawer({
     <Sheet>
       <SheetTrigger
         className={cn(
-          "inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-primary/20 bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-[0_10px_28px_-10px_hsl(var(--primary)/0.55)] transition-all",
+          "inline-flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-primary/20 bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-[0_8px_20px_-12px_hsl(var(--primary)/0.55)] transition-all",
           "hover:bg-primary/92 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2",
         )}
       >

@@ -11,6 +11,8 @@ type VenueBrandingLogoProps = {
   className?: string;
   /** Approximate rendered height (width scales). */
   height?: number;
+  /** Drop the brand tagline so the fallback mark stays readable in a short bar. */
+  compact?: boolean;
   alt?: string;
 };
 
@@ -22,6 +24,7 @@ export function VenueBrandingLogo({
   logoUrl,
   className,
   height = 40,
+  compact = false,
   alt = "Venue logo",
 }: VenueBrandingLogoProps) {
   const [failed, setFailed] = React.useState(false);
@@ -32,7 +35,7 @@ export function VenueBrandingLogo({
   }, [resolved]);
 
   if (!resolved || failed) {
-    return <BrandLogo height={height} className={className} />;
+    return <BrandLogo height={height} compact={compact} className={className} />;
   }
 
   return (
