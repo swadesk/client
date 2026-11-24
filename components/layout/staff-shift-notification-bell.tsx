@@ -4,6 +4,7 @@ import * as React from "react";
 import { Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { playOrderAlert } from "@/lib/toast-sound";
 import { getKitchenSocket } from "@/lib/socket";
 import { useAuthStore } from "@/store/auth-store";
 import { useRestaurantStore } from "@/store/restaurant-store";
@@ -41,6 +42,7 @@ export function StaffShiftNotificationBell() {
     (user.globalRole === "SuperAdmin" || user.role === "Admin" || user.role === "Manager");
 
   const appendAlert = React.useCallback((payload: StaffShiftSocketPayload) => {
+    playOrderAlert();
     const text = getStaffShiftInboxLabel(payload);
     const timeShort = new Date(payload.at).toLocaleTimeString(undefined, { timeStyle: "short" });
     const id = crypto.randomUUID();

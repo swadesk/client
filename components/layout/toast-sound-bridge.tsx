@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useSonner } from "sonner";
 import type { ToastT } from "sonner";
-import { playToastSound, unlockToastAudio } from "@/lib/toast-sound";
+import { orderAlertPlayedRecently, playOrderAlert, playToastSound, unlockToastAudio } from "@/lib/toast-sound";
 
 function extractText(node: unknown): string | null {
   if (node == null) return null;
@@ -27,20 +27,26 @@ function toastSummary(t: ToastT): string {
   return "New activity";
 }
 
+function pageNeedsSystemAlert(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.visibilityState === "hidden" || !document.hasFocus();
+}
+
 function notifyIfBackground(toast: ToastT): void {
   if (typeof window === "undefined") return;
-  if (window.document.visibilityState !== "hidden") return;
+  if (!pageNeedsSystemAlert()) return;
   if (!("Notification" in window) || Notification.permission !== "granted") return;
   const body = toastSummary(toast);
   try {
-    new Notification("qRyte", {
+    new Notification("NamasQr", {
       body: body.slice(0, 220),
       tag: `qryte-toast-${String(toast.id)}`,
       silent: false,
+      requireInteraction: true,
     });
     if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
       try {
-        navigator.vibrate(36);
+        navigator.vibrate([180, 80, 180, 80, 240]);
       } catch {
         /* ignore */
       }
@@ -64,9 +70,19 @@ export function ToastSoundBridge() {
     const unlock = () => unlockToastAudio();
     window.addEventListener("pointerdown", unlock, { passive: true });
     window.addEventListener("keydown", unlock);
+
+    const onSwMessage = (event: MessageEvent) => {
+      const data = event.data as { type?: string } | null;
+      if (!data || data.type !== "qryte-alert") return;
+      if (orderAlertPlayedRecently()) return;
+      playOrderAlert();
+    };
+    navigator.serviceWorker?.addEventListener("message", onSwMessage);
+
     return () => {
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("keydown", unlock);
+      navigator.serviceWorker?.removeEventListener("message", onSwMessage);
     };
   }, []);
 

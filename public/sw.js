@@ -1,5 +1,5 @@
-const STATIC_CACHE = "qryte-static-v3";
-const RUNTIME_CACHE = "qryte-runtime-v3";
+const STATIC_CACHE = "qryte-static-v4";
+const RUNTIME_CACHE = "qryte-runtime-v4";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -84,14 +84,27 @@ self.addEventListener("push", (event) => {
   const targetUrl = new URL(payload.url || "/", self.location.origin).href;
 
   event.waitUntil(
-    self.registration.showNotification(payload.title || "NamasQr", {
-      body: payload.body || "",
-      icon: payload.icon || "/icons/pwa-192.svg",
-      badge: payload.badge || "/icons/pwa-192.svg",
-      tag: String(payload.tag || "qryte-push"),
-      data: { url: targetUrl },
-      vibrate: [80],
-    }),
+    (async () => {
+      const tag = String(payload.tag || "qryte-push");
+      await self.registration.showNotification(payload.title || "NamasQr", {
+        body: payload.body || "",
+        icon: payload.icon || "/icons/pwa-192.svg",
+        badge: payload.badge || "/icons/pwa-192.svg",
+        tag,
+        renotify: true,
+        requireInteraction: true,
+        silent: false,
+        data: { url: targetUrl },
+        vibrate: [200, 80, 200, 80, 280],
+      });
+      const windows = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+      for (const client of windows) {
+        client.postMessage({ type: "qryte-alert", tag });
+      }
+    })(),
   );
 });
 
